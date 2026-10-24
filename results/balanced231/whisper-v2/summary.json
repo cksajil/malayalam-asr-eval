@@ -1,0 +1,143 @@
+{
+  "model": "whisper-v2",
+  "registry_entry": "whisper-v2",
+  "model_id": "sajilck/whisper-small-malayalam-v2",
+  "role": "own (sanity check)",
+  "params": "244M",
+  "subset": "balanced231",
+  "overlap_note": "Test set filtered against this model's training corpus.",
+  "overrides": null,
+  "overall": {
+    "n_clips": 231,
+    "audio_min": 18.64,
+    "WER": 0.311565,
+    "WER_CI95": [
+      0.279286,
+      0.346321
+    ],
+    "WER_raw": 0.320845,
+    "CER": 0.040409,
+    "sub": 0.229932,
+    "del": 0.040136,
+    "ins": 0.041497,
+    "exact_match": 0.277056,
+    "empty": 0,
+    "loops": 0,
+    "RTF": 1.931473,
+    "RTFx": 0.51774,
+    "latency_p50_s": 8.709257,
+    "latency_p90_s": 14.729435,
+    "latency_max_s": 23.826827,
+    "near_cap": 0
+  },
+  "per_source": {
+    "commonvoice": {
+      "n": 50,
+      "WER": 0.380342,
+      "CER": 0.077823,
+      "WER_CI95": [
+        0.290076,
+        0.478261
+      ],
+      "RTF": 1.726962
+    },
+    "imasc": {
+      "n": 44,
+      "WER": 0.317726,
+      "CER": 0.022411,
+      "WER_CI95": [
+        0.24735,
+        0.400017
+      ],
+      "RTF": 1.621143
+    },
+    "indictts": {
+      "n": 50,
+      "WER": 0.266881,
+      "CER": 0.026195,
+      "WER_CI95": [
+        0.20415,
+        0.332243
+      ],
+      "RTF": 2.00914
+    },
+    "openslr63": {
+      "n": 32,
+      "WER": 0.289157,
+      "CER": 0.03676,
+      "WER_CI95": [
+        0.192759,
+        0.391593
+      ],
+      "RTF": 1.705256
+    },
+    "shrutilipi": {
+      "n": 50,
+      "WER": 0.313636,
+      "CER": 0.047329,
+      "WER_CI95": [
+        0.258849,
+        0.36684
+      ],
+      "RTF": 2.656224
+    },
+    "smc": {
+      "n": 5,
+      "WER": 0.25,
+      "CER": 0.031008,
+      "RTF": 1.524327
+    }
+  },
+  "speed": {
+    "load_s": 41.987816,
+    "cold_first_clip_s": 9.315662,
+    "warmup_calls": 3,
+    "peak_rss_MB": 2417.949219,
+    "max_tokens_seen": 439
+  },
+  "adapter": {
+    "family": "whisper-transformers",
+    "model_id": "sajilck/whisper-small-malayalam-v2",
+    "revision": null,
+    "threads": 2,
+    "token_cap": 444,
+    "engine": "transformers FP32",
+    "decoding": "greedy (num_beams=1)",
+    "max_new_tokens": 444,
+    "language": "ml",
+    "generation_config_borrowed_from": null,
+    "long_form_clips": 0,
+    "versions": {
+      "torch": "2.11.0+cpu",
+      "transformers": "4.46.3",
+      "tokenizers": "0.20.3"
+    }
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Xeon(R) CPU @ 2.20GHz",
+    "logical_cpus_machine": 4,
+    "requested_cores": 2,
+    "threads": 2,
+    "physical_cores_machine": 2,
+    "pinned_logical_cpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "pinned_physical_cores": 2,
+    "isa": [
+      "avx",
+      "avx2",
+      "fma"
+    ],
+    "python": "3.13.15"
+  },
+  "date": "2026-10-24",
+  "sanity": {
+    "expected_WER": 0.312,
+    "expected_CER": 0.04,
+    "delta_WER_pts": -0.043537,
+    "delta_CER_pts": 0.040866
+  }
+}

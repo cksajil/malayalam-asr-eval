@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+.pytest_cache/
+eval_data/
+results/*/*/partial.csv
+.venv/
+venv/

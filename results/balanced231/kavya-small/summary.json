@@ -1,0 +1,137 @@
+{
+  "model": "kavya-small",
+  "registry_entry": "kavya-small",
+  "model_id": "kavyamanohar/whisper-small-malayalam",
+  "role": "competitor",
+  "params": "244M",
+  "subset": "balanced231",
+  "overlap_note": "Card lists Common Voice 13; commonvoice test sentences may overlap its training data.",
+  "overrides": null,
+  "overall": {
+    "n_clips": 231,
+    "audio_min": 18.64,
+    "WER": 0.870068,
+    "WER_CI95": [
+      0.824389,
+      0.936929
+    ],
+    "WER_raw": 0.887602,
+    "CER": 0.292086,
+    "sub": 0.668027,
+    "del": 0.145578,
+    "ins": 0.056463,
+    "exact_match": 0.025974,
+    "empty": 0,
+    "loops": 1,
+    "RTF": 2.298023,
+    "RTFx": 0.435157,
+    "latency_p50_s": 10.241767,
+    "latency_p90_s": 17.001937,
+    "latency_max_s": 35.586216,
+    "near_cap": 1
+  },
+  "per_source": {
+    "commonvoice": {
+      "n": 50,
+      "WER": 0.777778,
+      "CER": 0.296033,
+      "WER_CI95": [
+        0.645723,
+        0.885753
+      ],
+      "RTF": 2.009713
+    },
+    "imasc": {
+      "n": 44,
+      "WER": 0.822742,
+      "CER": 0.202716,
+      "WER_CI95": [
+        0.763697,
+        0.88773
+      ],
+      "RTF": 1.9785
+    },
+    "indictts": {
+      "n": 50,
+      "WER": 0.823151,
+      "CER": 0.197876,
+      "WER_CI95": [
+        0.76519,
+        0.880448
+      ],
+      "RTF": 2.264583
+    },
+    "openslr63": {
+      "n": 32,
+      "WER": 0.825301,
+      "CER": 0.23145,
+      "WER_CI95": [
+        0.752739,
+        0.897154
+      ],
+      "RTF": 1.971883
+    },
+    "shrutilipi": {
+      "n": 50,
+      "WER": 1.004545,
+      "CER": 0.455843,
+      "WER_CI95": [
+        0.908332,
+        1.187526
+      ],
+      "RTF": 3.310189
+    },
+    "smc": {
+      "n": 5,
+      "WER": 0.8,
+      "CER": 0.224806,
+      "RTF": 1.915509
+    }
+  },
+  "speed": {
+    "load_s": 16.148813,
+    "cold_first_clip_s": 10.262679,
+    "warmup_calls": 3,
+    "peak_rss_MB": 2457.789062,
+    "max_tokens_seen": 444
+  },
+  "adapter": {
+    "family": "whisper-transformers",
+    "model_id": "kavyamanohar/whisper-small-malayalam",
+    "revision": null,
+    "threads": 2,
+    "token_cap": 444,
+    "engine": "transformers FP32",
+    "decoding": "greedy (num_beams=1)",
+    "max_new_tokens": 444,
+    "language": "ml",
+    "generation_config_borrowed_from": null,
+    "long_form_clips": 0,
+    "versions": {
+      "torch": "2.11.0+cpu",
+      "transformers": "4.46.3",
+      "tokenizers": "0.20.3"
+    }
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Xeon(R) CPU @ 2.20GHz",
+    "logical_cpus_machine": 4,
+    "requested_cores": 2,
+    "threads": 2,
+    "physical_cores_machine": 2,
+    "pinned_logical_cpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "pinned_physical_cores": 2,
+    "isa": [
+      "avx",
+      "avx2",
+      "fma"
+    ],
+    "python": "3.13.15"
+  },
+  "date": "2026-10-24"
+}

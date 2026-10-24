@@ -1,0 +1,5 @@
+Model,Checkpoint,Params,Engine,WER %,95% CI,CER %,RTF,RTFx,p90 latency s,Peak RAM GB,Near cap,Max tokens,Empty,Loops
+indicconformer-ctc,ai4bharat/indic-conformer-600m-multilingual,600M,HF remote code (ONNX Runtime),30.1,27.2–33.3,4.0,0.14,7.13,1.07,3.88,0,–,0,0
+whisper-v2,sajilck/whisper-small-malayalam-v2,244M,transformers FP32,31.2,27.9–34.6,4.0,1.93,0.52,14.73,2.42,0,439 (1×),0,0
+mms-1b-all,facebook/mms-1b-all,965M,transformers FP32,52.5,49.0–56.1,9.2,0.86,1.16,6.6,8.77,0,–,1,0
+kavya-small,kavyamanohar/whisper-small-malayalam,244M,transformers FP32,87.0,82.4–93.7,29.2,2.3,0.44,17.0,2.46,1,444 (1×),0,1

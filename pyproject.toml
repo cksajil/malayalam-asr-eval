@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "malayalam-asr-eval"
+version = "0.1.0"
+description = "Leakage-free Malayalam ASR evaluation: WER/CER per source and CPU speed on 2 cores"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Sajil C.K." }]
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas",
+  "jiwer>=3.0",
+  "huggingface_hub",
+  "soundfile",
+  "librosa",
+  "psutil",
+  "tabulate",
+]
+
+[project.optional-dependencies]
+# transformers is pinned to the version behind the published v1/v2 numbers
+whisper = ["torch", "transformers==4.46.3"]
+faster-whisper = ["faster-whisper>=1.1", "ctranslate2>=4.4", "transformers==4.46.3", "torch"]
+conformer = ["torch", "torchaudio", "transformers==4.46.3", "onnxruntime>=1.20"]
+wav2vec2 = ["torch", "transformers==4.46.3"]
+all = ["malayalam-asr-eval[whisper,faster-whisper,conformer,wav2vec2]"]
+dev = ["pytest", "nbformat"]
+
+[tool.setuptools.packages.find]
+include = ["mlasr_eval*"]
