@@ -27,8 +27,9 @@ MODELS: dict[str, dict] = {
     # --- competitors -----------------------------------------------------------------------
     "vrclc-medium": dict(
         adapter="hf_whisper", model_id="vrclc/Whisper-medium-Malayalam",
-        role="competitor", params="769M",
-        overlap="Training data not checked yet; read the model card before quoting per-source numbers."),
+        role="competitor", params="769M", gated=True,
+        overlap="Gated: request access on its Hugging Face page (the owners approve it) before running. "
+                "Training data not checked yet; read the model card before quoting per-source numbers."),
     "kavya-small": dict(
         adapter="hf_whisper", model_id="kavyamanohar/whisper-small-malayalam",
         role="competitor", params="244M",

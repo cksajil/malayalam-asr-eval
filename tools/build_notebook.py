@@ -36,6 +36,10 @@ PLAN       = ["whisper-v2",          # sanity check, must be first
 OPTIONAL   = []             # e.g. ["indicconformer-rnnt", "xlsr-ml-shawn", "whisper-v1"]
 RUN_FULL   = False          # also score the full 2,684-clip clean set (~88% Shrutilipi; ~10x longer)
 SANITY_TOL = {"WER": 1.0, "CER": 0.5}   # percentage points vs published v2
+# Re-runs: attach an earlier results.zip as a Kaggle dataset and finished models are reused.
+# Models listed here are run again anyway (whisper-v2 first, so the sanity check and the
+# speed comparison come from this session's CPU).
+RERUN      = ["whisper-v2", "fw-v2-int8"]
 WORK       = "/kaggle/working"''')
 
 code(r'''import os, sys, json, subprocess, shutil, time
@@ -90,7 +94,17 @@ code(r'''def cli(*args, log=None):
 rc, _ = cli("prepare", "--subset", "balanced231", "--out", f"{WORK}/eval_data")
 assert rc == 0, "data preparation failed"
 DATA = f"{WORK}/eval_data/balanced231.pkl"
-RESULTS = f"{WORK}/results"''')
+RESULTS = f"{WORK}/results"
+
+prior = glob.glob("/kaggle/input/**/balanced231/*/summary.json", recursive=True)
+if prior and not os.path.isdir(f"{RESULTS}/balanced231"):
+    root = os.path.dirname(os.path.dirname(os.path.dirname(prior[0])))
+    shutil.copytree(root, RESULTS, ignore=shutil.ignore_patterns("*.log"))
+    print("reusing earlier results from", root, ":", sorted(os.listdir(f"{RESULTS}/balanced231")))
+for name in RERUN:
+    if os.path.isdir(f"{RESULTS}/balanced231/{name}"):
+        shutil.rmtree(f"{RESULTS}/balanced231/{name}")
+        print("will re-run", name)''')
 
 md("## 2. Sanity check: v2 must reproduce 31.2% WER / 4.0% CER")
 

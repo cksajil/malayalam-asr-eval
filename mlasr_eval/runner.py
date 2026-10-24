@@ -20,6 +20,7 @@ from .data import load_prepared
 from .models import MODELS, build
 
 NEAR_CAP_MARGIN = 4   # output within this many tokens of the cap is flagged as possibly cut off
+HIDDEN_CAP_MIN_CLIPS = 3
 
 
 def _clean_json(o):
@@ -98,11 +99,21 @@ def run_model(name: str, data_pkl: str, out_root: str = "results", threads: int 
         "overall": metrics.summarise(res), "per_source": metrics.per_source(res),
         "speed": {"load_s": load_s, "cold_first_clip_s": cold_s, "warmup_calls": warmup,
                   "peak_rss_MB": peak_rss_mb(),
-                  "max_tokens_seen": int(res.n_tokens.max()) if (res.n_tokens >= 0).any() else None},
+                  "max_tokens_seen": int(res.n_tokens.max()) if (res.n_tokens >= 0).any() else None,
+                  "clips_at_max_tokens": int((res.n_tokens == res.n_tokens.max()).sum())
+                  if (res.n_tokens >= 0).any() else None},
         "adapter": adapter.info(),
         "hardware": {**(cpu_info or {}), "isa": isa_flags(), "python": platform.python_version()},
         "date": time.strftime("%Y-%m-%d"),
     }
+    # A hidden length limit shows up as several outputs ending at exactly the same token count
+    # (e.g. 224 in CTranslate2, 220 in stock whisper.cpp), even when none is near the nominal cap.
+    warnings = []
+    sp = summary["speed"]
+    if sp["max_tokens_seen"] and sp["clips_at_max_tokens"] >= HIDDEN_CAP_MIN_CLIPS:
+        warnings.append(f"{sp['clips_at_max_tokens']} clips ended at exactly {sp['max_tokens_seen']} tokens: "
+                        f"possible hidden output-length limit; long clips may be truncated")
+    summary["warnings"] = warnings
     exp = spec.get("expect")
     if exp and subset == "balanced231" and not limit and not model_id and not overrides:
         summary["sanity"] = {"expected_WER": exp["WER"], "expected_CER": exp["CER"],
@@ -115,6 +126,8 @@ def run_model(name: str, data_pkl: str, out_root: str = "results", threads: int 
     if os.path.exists(partial):
         os.remove(partial)
 
+    for w in warnings:
+        print(f"[{run_name}] WARNING: {w}", flush=True)
     o = summary["overall"]
     print(f"[{run_name}] WER {100 * o['WER']:.1f}% (95% CI {100 * o['WER_CI95'][0]:.1f}–{100 * o['WER_CI95'][1]:.1f})"
           f"  CER {100 * o['CER']:.1f}%  RTF {o['RTF']:.2f}  near-cap {o.get('near_cap', 0)}"

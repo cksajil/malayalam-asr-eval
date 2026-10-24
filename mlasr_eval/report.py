@@ -11,7 +11,16 @@ SOURCES = ["shrutilipi", "commonvoice", "indictts", "imasc", "openslr63", "smc"]
 
 
 def load_summaries(results_dir: str, subset: str) -> list[dict]:
-    return [json.load(open(p)) for p in sorted(glob.glob(os.path.join(results_dir, subset, "*", "summary.json")))]
+    out = []
+    for p in sorted(glob.glob(os.path.join(results_dir, subset, "*", "summary.json"))):
+        s = json.load(open(p))
+        sp = s.setdefault("speed", {})
+        utt = os.path.join(os.path.dirname(p), "per_utterance.csv")
+        if "clips_at_max_tokens" not in sp and os.path.exists(utt):   # results from before this field existed
+            tok = pd.read_csv(utt, usecols=["n_tokens"]).n_tokens
+            sp["clips_at_max_tokens"] = int((tok == tok.max()).sum()) if (tok >= 0).any() else None
+        out.append(s)
+    return out
 
 
 def pct(x, nd=1):
@@ -31,7 +40,10 @@ def tables(summaries: list[dict]) -> tuple[pd.DataFrame, pd.DataFrame]:
             "RTF": round(o["RTF"], 2), "RTFx": round(o["RTFx"], 2) if o.get("RTFx") else None,
             "p90 latency s": round(o["latency_p90_s"], 2),
             "Peak RAM GB": round(sp["peak_rss_MB"] / 1000, 2),
-            "Near cap": o.get("near_cap", 0), "Empty": o["empty"], "Loops": o["loops"],
+            "Near cap": o.get("near_cap", 0),
+            "Max tokens": (f"{sp['max_tokens_seen']} ({sp.get('clips_at_max_tokens', '?')}×)"
+                           if sp.get("max_tokens_seen") not in (None, -1) else "–"),
+            "Empty": o["empty"], "Loops": o["loops"],
         })
         r = {"Model": s["model"]}
         for src in SOURCES:
@@ -80,6 +92,13 @@ def write_report(results_dir: str = "results", subset: str = "balanced231") -> s
                          f"({c['delta_WER_pts']:+.1f} pts), CER {pct(s['overall']['CER'])}% vs "
                          f"{pct(c['expected_CER'])}% ({c['delta_CER_pts']:+.1f} pts) — "
                          f"{'matches' if ok else 'DOES NOT MATCH: check the setup before trusting other rows'}")
+        lines.append("")
+    flagged = [s for s in summaries if s.get("warnings")]
+    if flagged:
+        lines += ["## Warnings", ""]
+        for s in flagged:
+            for w in s["warnings"]:
+                lines.append(f"- **{s['model']}**: {w}")
         lines.append("")
     lines += ["## Training-data overlap notes", ""]
     for s in summaries:

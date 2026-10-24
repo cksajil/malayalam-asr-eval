@@ -134,3 +134,30 @@ def test_cpu_configure_pins_affinity():
         assert info["pinned_physical_cores"] == 1 and os.environ["OMP_NUM_THREADS"] == "1"
     finally:
         os.sched_setaffinity(0, before)
+
+
+def test_faster_whisper_is_not_capped_at_224_tokens(tiny_whisper_dir, tmp_path):
+    """CTranslate2 emits at most max_length // 2 tokens; the adapter must double the budget.
+    The random model never emits end-of-text, so it runs to whatever cap is in force."""
+    pytest.importorskip("faster_whisper")
+    from mlasr_eval.adapters.faster_whisper_ct2 import FasterWhisper
+    a = FasterWhisper(tiny_whisper_dir, threads=1, ct2_dir=str(tmp_path / "ct2"), max_new_tokens=300)
+    a.load()
+    assert a.transcribe(WAV).n_tokens >= 299     # was 150 before the fix (304 // 2 - prompt)
+
+
+def test_runner_warns_about_hidden_token_ceiling(tiny_whisper_dir, synthetic_eval, tmp_path, monkeypatch):
+    # nominal cap 444 is never reached, but every clip stops at 10: the near-cap column can't see it
+    from mlasr_eval.adapters import hf_whisper
+    orig = hf_whisper.HFWhisper.transcribe
+
+    def capped(self, wav):
+        t = orig(self, wav)
+        t.n_tokens = 10
+        return t
+    monkeypatch.setattr(hf_whisper.HFWhisper, "transcribe", capped)
+    monkeypatch.setitem(models.MODELS, "tiny", dict(adapter="hf_whisper", model_id=tiny_whisper_dir,
+                                                    kwargs=dict(max_new_tokens=4)))
+    s = run_model("tiny", synthetic_eval, str(tmp_path / "r"), threads=1, warmup=0)
+    assert s["overall"]["near_cap"] == 12 or s["warnings"]
+    assert any("exactly 10 tokens" in w for w in s["warnings"])

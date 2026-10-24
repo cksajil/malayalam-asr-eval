@@ -74,13 +74,22 @@ class FasterWhisper(Adapter):
         self.model = WhisperModel(str(self.ct2_dir), device="cpu", compute_type=self.compute_type,
                                   cpu_threads=self.threads, num_workers=1)
         self.eot = self.model.hf_tokenizer.token_to_id("<|endoftext|>")
+        # CTranslate2's Whisper decoder emits at most max_length // 2 tokens, so faster-whisper's
+        # default (448) stops every output at 224 tokens: ~8 s of Malayalam. Ask for twice the
+        # budget; faster-whisper adds the 4 prompt tokens itself (sot, language, task, notimestamps).
+        prompt_len = 4
+        if self.max_new_tokens > 448 - prompt_len:
+            raise ValueError("max_new_tokens + 4 prompt tokens must fit in Whisper's 448 positions")
+        self.ct2_max_length = 2 * self.max_new_tokens
+        self.model.max_length = self.ct2_max_length          # lifts faster-whisper's 448 check
+        self._fw_max_new_tokens = self.ct2_max_length - prompt_len
 
     def transcribe(self, wav: np.ndarray) -> Transcript:
         segments, _ = self.model.transcribe(
             wav, language=self.language, task="transcribe", beam_size=self.beam_size, best_of=1,
             temperature=0.0,                    # single temperature: no fallback, like HF greedy
             condition_on_previous_text=False, without_timestamps=True, vad_filter=False,
-            word_timestamps=False, max_new_tokens=self.max_new_tokens)
+            word_timestamps=False, max_new_tokens=self._fw_max_new_tokens)
         segs = list(segments)                   # generator: decoding happens here, inside the timer
         text = " ".join(s.text.strip() for s in segs).strip()
         n_text = sum(sum(1 for t in s.tokens if t < self.eot) for s in segs)
@@ -90,7 +99,8 @@ class FasterWhisper(Adapter):
         d = super().info()
         d.update({"engine": f"CTranslate2 {self.compute_type}", "quantization": self.quantization,
                   "decoding": f"greedy (beam_size={self.beam_size}), no timestamps, no temperature fallback",
-                  "max_new_tokens": self.max_new_tokens, "language": self.language,
+                  "max_new_tokens": self.max_new_tokens,
+                  "ct2_max_length": getattr(self, "ct2_max_length", None), "language": self.language,
                   "convert_s": self.convert_s, "ct2_dir": str(self.ct2_dir),
                   "ct2_size_MB": round(sum(f.stat().st_size for f in self.ct2_dir.glob("*")) / 1e6, 1)
                   if self.ct2_dir.exists() else None,
