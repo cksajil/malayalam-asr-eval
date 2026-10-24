@@ -1,0 +1,134 @@
+{
+  "model": "indicconformer-ctc",
+  "registry_entry": "indicconformer-ctc",
+  "model_id": "ai4bharat/indic-conformer-600m-multilingual",
+  "role": "CTC baseline",
+  "params": "600M",
+  "subset": "balanced231",
+  "overlap_note": "Training data not stated on the card; AI4Bharat also published Shrutilipi, so the shrutilipi rows may overlap.",
+  "overrides": null,
+  "overall": {
+    "n_clips": 231,
+    "audio_min": 18.64,
+    "WER": 0.301361,
+    "WER_CI95": [
+      0.272417,
+      0.332825
+    ],
+    "WER_raw": 0.356267,
+    "CER": 0.039951,
+    "sub": 0.218367,
+    "del": 0.042857,
+    "ins": 0.040136,
+    "exact_match": 0.268398,
+    "empty": 0,
+    "loops": 0,
+    "RTF": 0.140276,
+    "RTFx": 7.128783,
+    "latency_p50_s": 0.623288,
+    "latency_p90_s": 1.067957,
+    "latency_max_s": 1.817191,
+    "near_cap": 0
+  },
+  "per_source": {
+    "commonvoice": {
+      "n": 50,
+      "WER": 0.380342,
+      "CER": 0.064598,
+      "WER_CI95": [
+        0.295539,
+        0.464717
+      ],
+      "RTF": 0.140888
+    },
+    "imasc": {
+      "n": 44,
+      "WER": 0.347826,
+      "CER": 0.033616,
+      "WER_CI95": [
+        0.281628,
+        0.414637
+      ],
+      "RTF": 0.132145
+    },
+    "indictts": {
+      "n": 50,
+      "WER": 0.254019,
+      "CER": 0.026549,
+      "WER_CI95": [
+        0.198715,
+        0.311936
+      ],
+      "RTF": 0.137879
+    },
+    "openslr63": {
+      "n": 32,
+      "WER": 0.246988,
+      "CER": 0.036079,
+      "WER_CI95": [
+        0.17284,
+        0.333382
+      ],
+      "RTF": 0.138556
+    },
+    "shrutilipi": {
+      "n": 50,
+      "WER": 0.275,
+      "CER": 0.042041,
+      "WER_CI95": [
+        0.215504,
+        0.339664
+      ],
+      "RTF": 0.153992
+    },
+    "smc": {
+      "n": 5,
+      "WER": 0.45,
+      "CER": 0.085271,
+      "RTF": 0.143182
+    }
+  },
+  "speed": {
+    "load_s": 39.293343,
+    "cold_first_clip_s": 1.036824,
+    "warmup_calls": 3,
+    "peak_rss_MB": 3879.332031,
+    "max_tokens_seen": null
+  },
+  "adapter": {
+    "family": "conformer",
+    "model_id": "ai4bharat/indic-conformer-600m-multilingual",
+    "revision": null,
+    "threads": 2,
+    "token_cap": null,
+    "engine": "HF remote code (ONNX Runtime)",
+    "decoding": "ctc",
+    "language": "ml",
+    "versions": {
+      "torch": "2.11.0+cpu",
+      "transformers": "4.46.3",
+      "onnxruntime": "1.31.0"
+    }
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Xeon(R) CPU @ 2.20GHz",
+    "logical_cpus_machine": 4,
+    "requested_cores": 2,
+    "threads": 2,
+    "physical_cores_machine": 2,
+    "pinned_logical_cpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "pinned_physical_cores": 2,
+    "isa": [
+      "avx",
+      "avx2",
+      "fma"
+    ],
+    "python": "3.13.15"
+  },
+  "date": "2026-10-24"
+}

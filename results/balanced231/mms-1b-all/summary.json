@@ -1,0 +1,133 @@
+{
+  "model": "mms-1b-all",
+  "registry_entry": "mms-1b-all",
+  "model_id": "facebook/mms-1b-all",
+  "role": "wav2vec2 CTC baseline",
+  "params": "965M",
+  "subset": "balanced231",
+  "overlap_note": "MMS fine-tuning data includes Common Voice and FLEURS; commonvoice rows may overlap.",
+  "overrides": null,
+  "overall": {
+    "n_clips": 231,
+    "audio_min": 18.64,
+    "WER": 0.52517,
+    "WER_CI95": [
+      0.489743,
+      0.560976
+    ],
+    "WER_raw": 0.565395,
+    "CER": 0.092482,
+    "sub": 0.393878,
+    "del": 0.085714,
+    "ins": 0.045578,
+    "exact_match": 0.103896,
+    "empty": 1,
+    "loops": 0,
+    "RTF": 0.861265,
+    "RTFx": 1.161083,
+    "latency_p50_s": 3.769409,
+    "latency_p90_s": 6.601348,
+    "latency_max_s": 10.608096,
+    "near_cap": 0
+  },
+  "per_source": {
+    "commonvoice": {
+      "n": 50,
+      "WER": 0.576923,
+      "CER": 0.104781,
+      "WER_CI95": [
+        0.488078,
+        0.673089
+      ],
+      "RTF": 0.851622
+    },
+    "imasc": {
+      "n": 44,
+      "WER": 0.474916,
+      "CER": 0.073345,
+      "WER_CI95": [
+        0.403981,
+        0.548888
+      ],
+      "RTF": 0.83265
+    },
+    "indictts": {
+      "n": 50,
+      "WER": 0.437299,
+      "CER": 0.050973,
+      "WER_CI95": [
+        0.372547,
+        0.517628
+      ],
+      "RTF": 0.87545
+    },
+    "openslr63": {
+      "n": 32,
+      "WER": 0.355422,
+      "CER": 0.068074,
+      "WER_CI95": [
+        0.259488,
+        0.465839
+      ],
+      "RTF": 0.90737
+    },
+    "shrutilipi": {
+      "n": 50,
+      "WER": 0.665909,
+      "CER": 0.142517,
+      "WER_CI95": [
+        0.624711,
+        0.710458
+      ],
+      "RTF": 0.859752
+    },
+    "smc": {
+      "n": 5,
+      "WER": 0.35,
+      "CER": 0.062016,
+      "RTF": 0.867935
+    }
+  },
+  "speed": {
+    "load_s": 55.044705,
+    "cold_first_clip_s": 2.807581,
+    "warmup_calls": 3,
+    "peak_rss_MB": 8771.121094,
+    "max_tokens_seen": null
+  },
+  "adapter": {
+    "family": "wav2vec2-ctc",
+    "model_id": "facebook/mms-1b-all",
+    "revision": null,
+    "threads": 2,
+    "token_cap": null,
+    "engine": "transformers FP32",
+    "decoding": "greedy CTC, no LM",
+    "target_lang": "mal",
+    "versions": {
+      "torch": "2.11.0+cpu",
+      "transformers": "4.46.3"
+    }
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Xeon(R) CPU @ 2.20GHz",
+    "logical_cpus_machine": 4,
+    "requested_cores": 2,
+    "threads": 2,
+    "physical_cores_machine": 2,
+    "pinned_logical_cpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "pinned_physical_cores": 2,
+    "isa": [
+      "avx",
+      "avx2",
+      "fma"
+    ],
+    "python": "3.13.15"
+  },
+  "date": "2026-10-24"
+}

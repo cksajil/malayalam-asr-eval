@@ -30,6 +30,24 @@ Optional: `whisper-v1`, `indicconformer-rnnt`, `xlsr-ml-shawn`. Parakeet and Nem
 checked and don't support Malayalam. Details, and which models may have trained on the same
 public corpora as the test rows, are in [docs/MODELS.md](docs/MODELS.md).
 
+## Results (interim, 24 Oct 2026)
+
+231 leakage-free clips (18.6 min of audio), Kaggle CPU (Intel Xeon 2.20 GHz) pinned to 2 physical
+cores, batch 1, greedy decoding. RTF below 1 is faster than real time. Full tables, per-source
+numbers and per-clip outputs: [results/balanced231/](results/balanced231/LEADERBOARD.md).
+
+| Model | WER % (95% CI) | CER % | RTF | Peak RAM |
+|---|---|---|---|---|
+| IndicConformer 600M, CTC | **30.1** (27.2–33.3) | **4.0** | **0.14** | 3.9 GB |
+| whisper-small-malayalam-v2 | 31.2 (27.9–34.6) | **4.0** | 1.93 | 2.4 GB |
+| MMS-1b-all (wav2vec2 CTC) | 52.5 (49.0–56.1) | 9.2 | 0.86 | 8.8 GB |
+| kavyamanohar/whisper-small-malayalam | 87.0 (82.4–93.7) | 29.2 | 2.30 | 2.5 GB |
+
+Still to come: v2 on CTranslate2 int8 (the first run hit a hidden 224-token limit in CTranslate2
+and was discarded) and vrclc/Whisper-medium-Malayalam (gated; access requested). See
+[docs/MODELS.md](docs/MODELS.md) for possible training-data overlap before comparing third-party
+models per source.
+
 ## Run it
 
 **Kaggle (recommended, CPU, ~4–5 h):** open
