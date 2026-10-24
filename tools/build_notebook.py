@@ -47,16 +47,44 @@ import glob
 os.chdir(WORK)
 REPO = f"{WORK}/malayalam-asr-eval"
 # Code source: an attached Kaggle dataset containing the repo (if any), otherwise GitHub.
-attached = glob.glob("/kaggle/input/**/malayalam-asr-eval/pyproject.toml", recursive=True)
+import zipfile
+
+def find_attached_code():
+    """Folder containing the eval code in /kaggle/input: extracted, or still inside a .zip."""
+    for p in sorted(glob.glob("/kaggle/input/**/mlasr_eval/runner.py", recursive=True)):
+        root = os.path.dirname(os.path.dirname(p))
+        if os.path.exists(f"{root}/pyproject.toml"):
+            return root
+    for z in sorted(glob.glob("/kaggle/input/**/*.zip", recursive=True)):
+        try:
+            with zipfile.ZipFile(z) as zf:
+                hits = [n for n in zf.namelist() if n.endswith("mlasr_eval/runner.py")]
+                if hits:
+                    out = f"{WORK}/_code_unzipped"
+                    shutil.rmtree(out, ignore_errors=True)
+                    zf.extractall(out)
+                    return os.path.join(out, hits[0][: -len("mlasr_eval/runner.py")])
+        except zipfile.BadZipFile:
+            pass
+    return None
+
+if os.path.isdir(REPO) and not os.path.exists(f"{REPO}/mlasr_eval/runner.py"):
+    shutil.rmtree(REPO)              # leftover from a failed attempt (e.g. a clone without the code)
 if not os.path.isdir(REPO):
-    if attached:
-        src = os.path.dirname(attached[0])
+    src = find_attached_code()
+    if src:
         shutil.copytree(src, REPO)   # /kaggle/input is read-only; the install needs a writable copy
         print("code from attached dataset:", src)
     else:
-        subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", BRANCH, REPO_URL], check=True)
-        print("code from GitHub:", REPO_URL, BRANCH)
-assert os.path.exists(f"{REPO}/mlasr_eval/runner.py"), "eval code not found - attach the code dataset"
+        print("No eval code found in the attached datasets. What is attached:")
+        for p in sorted(glob.glob("/kaggle/input/*/*")) + sorted(glob.glob("/kaggle/input/*/*/*"))[:30]:
+            print("  ", p)
+        print("Trying GitHub:", REPO_URL, BRANCH)
+        subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", BRANCH, REPO_URL, REPO], check=False)
+if not os.path.exists(f"{REPO}/mlasr_eval/runner.py"):
+    shutil.rmtree(REPO, ignore_errors=True)
+    raise SystemExit("Eval code not found. Attach the 'malayalam-asr-eval-code' dataset "
+                     "(Add Input), or set BRANCH to a GitHub branch that has the code.")
 # Every model runs in a fresh subprocess, so packages installed here are picked up without a kernel restart.
 subprocess.run(f"pip install -q -e '{REPO}[all]'", shell=True, check=True)''')
 
@@ -97,6 +125,16 @@ DATA = f"{WORK}/eval_data/balanced231.pkl"
 RESULTS = f"{WORK}/results"
 
 prior = glob.glob("/kaggle/input/**/balanced231/*/summary.json", recursive=True)
+if not prior:   # results dataset stored as a .zip rather than extracted
+    for z in sorted(glob.glob("/kaggle/input/**/*.zip", recursive=True)):
+        try:
+            with zipfile.ZipFile(z) as zf:
+                if any(n.startswith("balanced231/") and n.endswith("summary.json") for n in zf.namelist()):
+                    zf.extractall(f"{WORK}/_prior_results")
+                    prior = glob.glob(f"{WORK}/_prior_results/balanced231/*/summary.json")
+                    break
+        except zipfile.BadZipFile:
+            pass
 if prior and not os.path.isdir(f"{RESULTS}/balanced231"):
     root = os.path.dirname(os.path.dirname(os.path.dirname(prior[0])))
     shutil.copytree(root, RESULTS, ignore=shutil.ignore_patterns("*.log"))
