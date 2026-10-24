@@ -17,6 +17,7 @@ doesn't, the notebook stops, because nothing after it would be comparable.
 
 **Kaggle setup**
 - Accelerator → **None** (CPU). Internet → **On**.
+- Code: attach the Kaggle dataset that contains the `malayalam-asr-eval` folder; if none is attached, the repo is cloned from GitHub.
 - Add-ons → Secrets → `HF_TOKEN` (needed for IndicConformer, which is gated: accept its conditions on
   huggingface.co/ai4bharat/indic-conformer-600m-multilingual first). Without it that one model is skipped.
 - Runtime: roughly 4–5 h for the default plan (vrclc medium is the slowest, so it runs last).
@@ -38,11 +39,20 @@ SANITY_TOL = {"WER": 1.0, "CER": 0.5}   # percentage points vs published v2
 WORK       = "/kaggle/working"''')
 
 code(r'''import os, sys, json, subprocess, shutil, time
+import glob
 os.chdir(WORK)
-if not os.path.isdir("malayalam-asr-eval"):
-    subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", BRANCH, REPO_URL], check=True)
 REPO = f"{WORK}/malayalam-asr-eval"
-print(subprocess.run(["git", "-C", REPO, "log", "-1", "--oneline"], capture_output=True, text=True).stdout)
+# Code source: an attached Kaggle dataset containing the repo (if any), otherwise GitHub.
+attached = glob.glob("/kaggle/input/**/malayalam-asr-eval/pyproject.toml", recursive=True)
+if not os.path.isdir(REPO):
+    if attached:
+        src = os.path.dirname(attached[0])
+        shutil.copytree(src, REPO)   # /kaggle/input is read-only; the install needs a writable copy
+        print("code from attached dataset:", src)
+    else:
+        subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", BRANCH, REPO_URL], check=True)
+        print("code from GitHub:", REPO_URL, BRANCH)
+assert os.path.exists(f"{REPO}/mlasr_eval/runner.py"), "eval code not found - attach the code dataset"
 # Every model runs in a fresh subprocess, so packages installed here are picked up without a kernel restart.
 subprocess.run(f"pip install -q -e '{REPO}[all]'", shell=True, check=True)''')
 
