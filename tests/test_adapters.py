@@ -149,15 +149,52 @@ def test_faster_whisper_is_not_capped_at_224_tokens(tiny_whisper_dir, tmp_path):
 def test_runner_warns_about_hidden_token_ceiling(tiny_whisper_dir, synthetic_eval, tmp_path, monkeypatch):
     # nominal cap 444 is never reached, but every clip stops at 10: the near-cap column can't see it
     from mlasr_eval.adapters import hf_whisper
-    orig = hf_whisper.HFWhisper.transcribe
-
-    def capped(self, wav):
-        t = orig(self, wav)
-        t.n_tokens = 10
-        return t
-    monkeypatch.setattr(hf_whisper.HFWhisper, "transcribe", capped)
-    monkeypatch.setitem(models.MODELS, "tiny", dict(adapter="hf_whisper", model_id=tiny_whisper_dir,
-                                                    kwargs=dict(max_new_tokens=4)))
+    from mlasr_eval.adapters.base import Transcript
+    monkeypatch.setattr(hf_whisper.HFWhisper, "transcribe",
+                        lambda self, wav: Transcript(text="കേരളം ആഗോള", n_tokens=10))
+    monkeypatch.setitem(models.MODELS, "tiny", dict(adapter="hf_whisper", model_id=tiny_whisper_dir))
     s = run_model("tiny", synthetic_eval, str(tmp_path / "r"), threads=1, warmup=0)
-    assert s["overall"]["near_cap"] == 12 or s["warnings"]
+    assert s["overall"]["near_cap"] == 0
     assert any("exactly 10 tokens" in w for w in s["warnings"])
+
+
+def test_runner_reports_repetition_loops_at_cap(tiny_whisper_dir, synthetic_eval, tmp_path, monkeypatch):
+    from mlasr_eval.adapters import hf_whisper
+    from mlasr_eval.adapters.base import Transcript
+    monkeypatch.setattr(hf_whisper.HFWhisper, "transcribe",
+                        lambda self, wav: Transcript(text="കേരളം " * 20, n_tokens=self.token_cap))
+    monkeypatch.setitem(models.MODELS, "tiny", dict(adapter="hf_whisper", model_id=tiny_whisper_dir,
+                                                    kwargs=dict(max_new_tokens=8)))
+    s = run_model("tiny", synthetic_eval, str(tmp_path / "r"), threads=1, warmup=0)
+    assert s["overall"]["near_cap"] == 12
+    assert any("repetition loops" in w and "model failures" in w for w in s["warnings"])
+
+
+def test_report_speed_vs_v2_and_unseen_sources(tmp_path, monkeypatch):
+    import pandas as pd
+    from mlasr_eval import metrics
+    from mlasr_eval.report import write_report
+    monkeypatch.setitem(models.MODELS, "comp", dict(adapter="hf_whisper", model_id="x/comp",
+                                                    overlap_sources=["smc"]))
+    root = tmp_path / "res" / "balanced231"
+
+    def put(name, entry, model_id, session, rtf, hyps, extra=None):
+        d = pd.DataFrame({"source": ["smc", "smc", "imasc", "imasc"], "ref": ["a b"] * 4, "hyp": hyps,
+                          "dur": 1.0, "total_s": rtf})
+        d = metrics.score(d)
+        (root / name).mkdir(parents=True)
+        d.to_csv(root / name / "per_utterance.csv", index=False)
+        s = {"model": name, "registry_entry": entry, "model_id": model_id, "session": session,
+             "overall": metrics.summarise(d), "per_source": metrics.per_source(d),
+             "speed": {"peak_rss_MB": 1000, "max_tokens_seen": None}, "adapter": {"engine": "e"}, **(extra or {})}
+        json.dump(s, open(root / name / "summary.json", "w"))
+
+    put("whisper-v2", "whisper-v2", "sajilck/whisper-small-malayalam-v2", "B", 2.0, ["a b"] * 4)
+    put("comp", "comp", "x/comp", "A", 0.5, ["a b", "a b", "x y", "x y"],     # perfect only on its own data
+        extra={"speed_ref": {"v2_RTF": 1.5}})
+    md = open(write_report(str(tmp_path / "res"), "balanced231")).read()
+    row = next(line for line in md.splitlines() if line.startswith("| comp"))
+    assert "100.0 (2 clips)" in row          # unseen-source WER ignores the memorised smc clips
+    assert "|             3 |" in row or " 3 " in row   # 1.5 / 0.5 = 3x faster than v2 in its own session
+    assert "0.0 / 0.0 *" in md
+

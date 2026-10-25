@@ -24,29 +24,47 @@ won't reach most of the people Malayalam ASR is for.
 | `indicconformer-ctc` | ai4bharat/indic-conformer-600m-multilingual | CTC (gated: needs `HF_TOKEN`) |
 | `mms-1b-all` | facebook/mms-1b-all (`mal` adapter) | wav2vec2 CTC |
 | `kavya-small` | kavyamanohar/whisper-small-malayalam | Transformers FP32 |
-| `vrclc-medium` | vrclc/Whisper-medium-Malayalam | Transformers FP32 |
+| `vrclc-medium` | vrclc/Whisper-medium-Malayalam | Transformers FP32 (gated: request access) |
 
 Optional: `whisper-v1`, `indicconformer-rnnt`, `xlsr-ml-shawn`. Parakeet and Nemotron were
 checked and don't support Malayalam. Details, and which models may have trained on the same
 public corpora as the test rows, are in [docs/MODELS.md](docs/MODELS.md).
 
-## Results (interim, 24 Oct 2026)
+## Results (October 2026)
 
 231 leakage-free clips (18.6 min of audio), Kaggle CPU (Intel Xeon 2.20 GHz) pinned to 2 physical
-cores, batch 1, greedy decoding. RTF below 1 is faster than real time. Full tables, per-source
-numbers and per-clip outputs: [results/balanced231/](results/balanced231/LEADERBOARD.md).
+cores, batch 1, greedy decoding. Full tables, per-source numbers and per-clip outputs:
+[results/balanced231/LEADERBOARD.md](results/balanced231/LEADERBOARD.md).
 
-| Model | WER % (95% CI) | CER % | RTF | Peak RAM |
-|---|---|---|---|---|
-| IndicConformer 600M, CTC | **30.1** (27.2–33.3) | **4.0** | **0.14** | 3.9 GB |
-| whisper-small-malayalam-v2 | 31.2 (27.9–34.6) | **4.0** | 1.93 | 2.4 GB |
-| MMS-1b-all (wav2vec2 CTC) | 52.5 (49.0–56.1) | 9.2 | 0.86 | 8.8 GB |
-| kavyamanohar/whisper-small-malayalam | 87.0 (82.4–93.7) | 29.2 | 2.30 | 2.5 GB |
+| Model | WER % (95% CI) | CER % | WER % on unseen sources¹ | Speed vs v2² | RTF³ | Peak RAM |
+|---|---|---|---|---|---|---|
+| IndicConformer 600M, CTC | **30.1** (27.2–33.3) | **4.0** | 31.3 | **13.8×** | **0.14** | 3.9 GB |
+| whisper-small-malayalam-v2 | 31.2 (27.9–34.6) | **4.0** | 31.2 | 1.0× | 2.28 | 2.4 GB |
+| v2, CTranslate2 int8 | 32.7 (29.6–36.1) | 4.2 | 32.7 | 1.9× | 1.22 | 2.6 GB |
+| vrclc/Whisper-medium-Malayalam | 39.7 (33.1–47.3) | 10.1 | 52.9 | 0.35× | 6.58 | 5.2 GB |
+| MMS-1b-all (wav2vec2 CTC) | 52.5 (49.0–56.1) | 9.2 | 51.5 | 2.2× | 0.86 | 8.8 GB |
+| kavyamanohar/whisper-small-malayalam | 87.0 (82.4–93.7) | 29.2 | 88.8 | 0.84× | 2.30 | 2.5 GB |
 
-Still to come: v2 on CTranslate2 int8 (the first run hit a hidden 224-token limit in CTranslate2
-and was discarded) and vrclc/Whisper-medium-Malayalam (gated; access requested). See
-[docs/MODELS.md](docs/MODELS.md) for possible training-data overlap before comparing third-party
-models per source.
+¹ WER after dropping clips from corpora in that model's own published training data: the fair
+column for third-party models (see [docs/MODELS.md](docs/MODELS.md)).
+² How many times faster than v2 measured on the same machine; speeds on the "same" Kaggle CPU varied
+by ~20% between sessions, so this is the column to compare.
+³ Compute time ÷ audio time; below 1 is faster than real time.
+
+### Findings
+
+- **A CTC model matches v2's accuracy at ~14× the speed.** IndicConformer is statistically tied with
+  v2 (confidence intervals overlap almost completely) and runs 7× faster than real time on 2 cores.
+  It is the only model here that is both accurate and real-time on this hardware.
+- **Optimising autoregressive Whisper isn't enough.** CTranslate2 int8 makes v2 1.9× faster for 1.5
+  WER points, but it is still slower than real time (RTF 1.22). Whisper's cost grows with the number
+  of tokens, and its tokenizer needs ~27 tokens per second of Malayalam speech.
+- **Overlap with training data distorts rankings.** vrclc medium scores 0.0% WER on SMC, 8.4% on
+  OpenSLR 63 and 16.1% on IMaSC, the corpora it was trained on, but 62–70% on Shrutilipi and Common
+  Voice. Its headline 39.7% becomes 52.9% on sources it hasn't seen.
+- **Hidden output limits are easy to miss.** The first CTranslate2 run stopped every transcript at
+  224 tokens (CTranslate2 generates at most half of `max_length`) and scored 38.0% WER. The runner
+  now flags any run where several outputs end at exactly the same token count.
 
 ## Run it
 

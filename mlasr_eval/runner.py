@@ -105,12 +105,22 @@ def run_model(name: str, data_pkl: str, out_root: str = "results", threads: int 
         "adapter": adapter.info(),
         "hardware": {**(cpu_info or {}), "isa": isa_flags(), "python": platform.python_version()},
         "date": time.strftime("%Y-%m-%d"),
+        # Same CPU model can differ ~20% in speed between Kaggle sessions, so speeds are compared
+        # with whisper-v2 measured in the same session (same machine).
+        "session": os.environ.get("MLASR_SESSION") or platform.node(),
     }
-    # A hidden length limit shows up as several outputs ending at exactly the same token count
-    # (e.g. 224 in CTranslate2, 220 in stock whisper.cpp), even when none is near the nominal cap.
     warnings = []
     sp = summary["speed"]
-    if sp["max_tokens_seen"] and sp["clips_at_max_tokens"] >= HIDDEN_CAP_MIN_CLIPS:
+    at_cap = int(res.near_cap.sum()) if cap else 0
+    if at_cap:
+        loops = int(res[res.near_cap].loop.sum())
+        warnings.append(f"{at_cap} clips reached the {cap}-token cap ({loops} of them repetition loops); "
+                        f"these are model failures, not truncation of real speech" if loops == at_cap
+                        else f"{at_cap} clips reached the {cap}-token cap ({loops} repetition loops); "
+                             f"the others may be cut off")
+    # A hidden length limit shows up as several outputs ending at exactly the same token count
+    # below the nominal cap (e.g. 224 in CTranslate2, 220 in stock whisper.cpp).
+    elif sp["max_tokens_seen"] and sp["clips_at_max_tokens"] >= HIDDEN_CAP_MIN_CLIPS:
         warnings.append(f"{sp['clips_at_max_tokens']} clips ended at exactly {sp['max_tokens_seen']} tokens: "
                         f"possible hidden output-length limit; long clips may be truncated")
     summary["warnings"] = warnings

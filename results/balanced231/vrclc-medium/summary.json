@@ -1,0 +1,142 @@
+{
+  "model": "vrclc-medium",
+  "registry_entry": "vrclc-medium",
+  "model_id": "vrclc/Whisper-medium-Malayalam",
+  "role": "competitor",
+  "params": "769M",
+  "subset": "balanced231",
+  "overlap_note": "Gated: request access on its Hugging Face page (the owners approve it) before running. Training data not checked yet; read the model card before quoting per-source numbers.",
+  "overrides": null,
+  "overall": {
+    "n_clips": 231,
+    "audio_min": 18.64,
+    "WER": 0.396599,
+    "WER_CI95": [
+      0.331174,
+      0.472962
+    ],
+    "WER_raw": 0.458447,
+    "CER": 0.10125,
+    "sub": 0.278231,
+    "del": 0.044898,
+    "ins": 0.073469,
+    "exact_match": 0.341991,
+    "empty": 0,
+    "loops": 2,
+    "RTF": 6.576214,
+    "RTFx": 0.152063,
+    "latency_p50_s": 29.486157,
+    "latency_p90_s": 47.521692,
+    "latency_max_s": 91.758457,
+    "near_cap": 3
+  },
+  "per_source": {
+    "commonvoice": {
+      "n": 50,
+      "WER": 0.705128,
+      "CER": 0.206511,
+      "WER_CI95": [
+        0.470577,
+        1.131969
+      ],
+      "RTF": 6.338789
+    },
+    "imasc": {
+      "n": 44,
+      "WER": 0.160535,
+      "CER": 0.012224,
+      "WER_CI95": [
+        0.094333,
+        0.230373
+      ],
+      "RTF": 5.447264
+    },
+    "indictts": {
+      "n": 50,
+      "WER": 0.263666,
+      "CER": 0.030796,
+      "WER_CI95": [
+        0.210694,
+        0.32217
+      ],
+      "RTF": 6.445977
+    },
+    "openslr63": {
+      "n": 32,
+      "WER": 0.084337,
+      "CER": 0.007488,
+      "WER_CI95": [
+        0.039103,
+        0.136661
+      ],
+      "RTF": 5.813102
+    },
+    "shrutilipi": {
+      "n": 50,
+      "WER": 0.622727,
+      "CER": 0.208355,
+      "WER_CI95": [
+        0.53473,
+        0.723714
+      ],
+      "RTF": 9.084881
+    },
+    "smc": {
+      "n": 5,
+      "WER": 0.0,
+      "CER": 0.0,
+      "RTF": 5.477491
+    }
+  },
+  "speed": {
+    "load_s": 49.193256,
+    "cold_first_clip_s": 26.819916,
+    "warmup_calls": 3,
+    "peak_rss_MB": 5160.574219,
+    "max_tokens_seen": 444,
+    "clips_at_max_tokens": 3
+  },
+  "adapter": {
+    "family": "whisper-transformers",
+    "model_id": "vrclc/Whisper-medium-Malayalam",
+    "revision": null,
+    "threads": 2,
+    "token_cap": 444,
+    "engine": "transformers FP32",
+    "decoding": "greedy (num_beams=1)",
+    "max_new_tokens": 444,
+    "language": "ml",
+    "generation_config_borrowed_from": null,
+    "long_form_clips": 0,
+    "versions": {
+      "torch": "2.11.0+cpu",
+      "transformers": "4.46.3",
+      "tokenizers": "0.20.3"
+    }
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Xeon(R) CPU @ 2.20GHz",
+    "logical_cpus_machine": 4,
+    "requested_cores": 2,
+    "threads": 2,
+    "physical_cores_machine": 2,
+    "pinned_logical_cpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "pinned_physical_cores": 2,
+    "isa": [
+      "avx",
+      "avx2",
+      "fma"
+    ],
+    "python": "3.13.15"
+  },
+  "date": "2026-10-24",
+  "warnings": [
+    "3 clips reached the 444-token cap (2 repetition loops, 1 repeated sentence); these are model failures, not truncation of real speech"
+  ],
+  "session": "kaggle-2026-10-24-b"
+}

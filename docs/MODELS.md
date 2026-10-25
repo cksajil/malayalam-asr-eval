@@ -13,7 +13,7 @@ against `sajilck/malayalam-asr-corpus`'s own train split, so it can't rule this 
 | `indicconformer-ctc` | ai4bharat/indic-conformer-600m-multilingual | HF remote code (ONNX Runtime), CTC | Non-autoregressive: cost scales with audio length, not token count | Training data not stated; AI4Bharat also built Shrutilipi |
 | `mms-1b-all` | facebook/mms-1b-all, `target_lang="mal"` | wav2vec2 CTC, FP32 | The strongest maintained wav2vec2 option with a Malayalam head | Fine-tuned on data that includes Common Voice and FLEURS |
 | `kavya-small` | kavyamanohar/whisper-small-malayalam | Transformers FP32 | Competitor, same size as v2 | Card lists Common Voice 13 |
-| `vrclc-medium` | vrclc/Whisper-medium-Malayalam | Transformers FP32 | Competitor, 3× larger | Not checked yet: read its card before quoting per-source numbers |
+| `vrclc-medium` | vrclc/Whisper-medium-Malayalam (gated) | Transformers FP32 | Competitor, 3× larger | Card lists IMaSC, OpenSLR 63, SMC's Malayalam Speech Corpus and Festvox-IIITH. Measured: 0.0% WER on smc, 8.4% on openslr63, 16.1% on imasc vs 62–70% on unseen sources |
 
 ## Optional entries
 
@@ -41,11 +41,15 @@ fine-tune appears.
 
 ## Notes on fairness
 
+- The leaderboard marks per-source cells from a model's own training corpora with `*`, and
+  reports "WER % unseen sources", which drops those clips. Use that column to rank third-party
+  models.
 - Every model gets the same audio (16 kHz mono float32), the same normalisation and the
   same scorer. No language model is used for any CTC model.
 - Autoregressive models are capped at 444 new tokens (4 prompt + 444 = 448, Whisper's
   limit). The `Near cap` column counts clips whose output reached the cap; it should be 0.
 - CPU speed: each model runs in its own process pinned to 2 physical cores. IndicConformer's
   ONNX Runtime sessions pick their own thread count, but affinity keeps them on the same
-  2 cores. Speeds depend on the CPU Kaggle assigns (the CPU model is recorded in every
-  result), so compare rows from the same run.
+  2 cores. The same Kaggle CPU model varied ~20% in speed between sessions (v2: RTF 1.93 vs
+  2.28), so every run records its session and the leaderboard's "Speed vs v2" compares each
+  model with v2 measured on the same machine.

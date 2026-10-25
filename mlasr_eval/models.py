@@ -27,19 +27,20 @@ MODELS: dict[str, dict] = {
     # --- competitors -----------------------------------------------------------------------
     "vrclc-medium": dict(
         adapter="hf_whisper", model_id="vrclc/Whisper-medium-Malayalam",
-        role="competitor", params="769M", gated=True,
-        overlap="Gated: request access on its Hugging Face page (the owners approve it) before running. "
-                "Training data not checked yet; read the model card before quoting per-source numbers."),
+        role="competitor", params="769M", gated=True, overlap_sources=["imasc", "openslr63", "smc"],
+        overlap="Gated (request access on its Hugging Face page). Card lists IMaSC, OpenSLR 63, SMC's "
+                "Malayalam Speech Corpus and Festvox-IIITH as training data, so its imasc, openslr63 and "
+                "smc rows may have been seen in training; shrutilipi, commonvoice and indictts are fair."),
     "kavya-small": dict(
         adapter="hf_whisper", model_id="kavyamanohar/whisper-small-malayalam",
-        role="competitor", params="244M",
+        role="competitor", params="244M", overlap_sources=["commonvoice"],
         overlap="Card lists Common Voice 13; commonvoice test sentences may overlap its training data."),
 
     # --- non-autoregressive (CTC) ---------------------------------------------------------------
     "indicconformer-ctc": dict(
         adapter="indic_conformer", model_id="ai4bharat/indic-conformer-600m-multilingual",
         kwargs=dict(decoding="ctc", language="ml"),
-        role="CTC baseline", params="600M", gated=True,
+        role="CTC baseline", params="600M", gated=True, overlap_sources=["shrutilipi"],
         overlap="Training data not stated on the card; AI4Bharat also published Shrutilipi, so the "
                 "shrutilipi rows may overlap."),
     "indicconformer-rnnt": dict(
@@ -49,11 +50,12 @@ MODELS: dict[str, dict] = {
         overlap="As indicconformer-ctc."),
     "mms-1b-all": dict(
         adapter="wav2vec2_ctc", model_id="facebook/mms-1b-all", kwargs=dict(target_lang="mal"),
-        role="wav2vec2 CTC baseline", params="965M",
+        role="wav2vec2 CTC baseline", params="965M", overlap_sources=["commonvoice"],
         overlap="MMS fine-tuning data includes Common Voice and FLEURS; commonvoice rows may overlap."),
     "xlsr-ml-shawn": dict(
         adapter="wav2vec2_ctc", model_id="shawn-nyk/wav2vec-large-xlsr-malayalam-with-lm",
         role="optional wav2vec2 (XLS-R 300M)", params="315M", optional=True,
+        overlap_sources=["indictts", "openslr63", "smc"],
         overlap="Card says it was trained on Indic TTS, OpenSLR, SMC and IIIT-H Malayalam; indictts, "
                 "openslr63 and smc rows likely overlap. Report its overall number with that caveat."),
 }

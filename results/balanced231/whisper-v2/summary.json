@@ -23,11 +23,11 @@
     "exact_match": 0.277056,
     "empty": 0,
     "loops": 0,
-    "RTF": 1.931473,
-    "RTFx": 0.51774,
-    "latency_p50_s": 8.709257,
-    "latency_p90_s": 14.729435,
-    "latency_max_s": 23.826827,
+    "RTF": 2.275473,
+    "RTFx": 0.439469,
+    "latency_p50_s": 10.230858,
+    "latency_p90_s": 17.241579,
+    "latency_max_s": 28.816015,
     "near_cap": 0
   },
   "per_source": {
@@ -39,7 +39,7 @@
         0.290076,
         0.478261
       ],
-      "RTF": 1.726962
+      "RTF": 2.009313
     },
     "imasc": {
       "n": 44,
@@ -49,7 +49,7 @@
         0.24735,
         0.400017
       ],
-      "RTF": 1.621143
+      "RTF": 1.890809
     },
     "indictts": {
       "n": 50,
@@ -59,7 +59,7 @@
         0.20415,
         0.332243
       ],
-      "RTF": 2.00914
+      "RTF": 2.328112
     },
     "openslr63": {
       "n": 32,
@@ -69,7 +69,7 @@
         0.192759,
         0.391593
       ],
-      "RTF": 1.705256
+      "RTF": 2.044354
     },
     "shrutilipi": {
       "n": 50,
@@ -79,21 +79,22 @@
         0.258849,
         0.36684
       ],
-      "RTF": 2.656224
+      "RTF": 3.194282
     },
     "smc": {
       "n": 5,
       "WER": 0.25,
       "CER": 0.031008,
-      "RTF": 1.524327
+      "RTF": 1.833216
     }
   },
   "speed": {
-    "load_s": 41.987816,
-    "cold_first_clip_s": 9.315662,
+    "load_s": 49.677812,
+    "cold_first_clip_s": 9.984498,
     "warmup_calls": 3,
-    "peak_rss_MB": 2417.949219,
-    "max_tokens_seen": 439
+    "peak_rss_MB": 2414.078125,
+    "max_tokens_seen": 439,
+    "clips_at_max_tokens": 1
   },
   "adapter": {
     "family": "whisper-transformers",
@@ -134,10 +135,12 @@
     "python": "3.13.15"
   },
   "date": "2026-10-24",
+  "warnings": [],
   "sanity": {
     "expected_WER": 0.312,
     "expected_CER": 0.04,
     "delta_WER_pts": -0.043537,
     "delta_CER_pts": 0.040866
-  }
+  },
+  "session": "kaggle-2026-10-24-b"
 }
