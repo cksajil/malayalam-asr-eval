@@ -40,7 +40,7 @@ cores, batch 1, greedy decoding. Full tables, per-source numbers and per-clip ou
 |---|---|---|---|---|---|---|
 | IndicConformer 600M, CTC | **30.1** (27.2–33.3) | **4.0** | 31.3 | **13.8×** | **0.14** | 3.9 GB |
 | whisper-small-malayalam-v2 | 31.2 (27.9–34.6) | **4.0** | 31.2 | 1.0× | 2.28 | 2.4 GB |
-| v2, CTranslate2 int8 | 32.7 (29.6–36.1) | 4.2 | 32.7 | 1.9× | 1.22 | 2.6 GB |
+| v2, CTranslate2 int8 | 32.7 (29.6–36.1) | 4.2 | 32.7 | 1.9× | 1.22 | 2.6 GB⁴ |
 | vrclc/Whisper-medium-Malayalam | 39.7 (33.1–47.3) | 10.1 | 52.9 | 0.35× | 6.58 | 5.2 GB |
 | MMS-1b-all (wav2vec2 CTC) | 52.5 (49.0–56.1) | 9.2 | 51.5 | 2.2× | 0.86 | 8.8 GB |
 | kavyamanohar/whisper-small-malayalam | 87.0 (82.4–93.7) | 29.2 | 88.8 | 0.84× | 2.30 | 2.5 GB |
@@ -50,6 +50,7 @@ column for third-party models (see [docs/MODELS.md](docs/MODELS.md)).
 ² How many times faster than v2 measured on the same machine; speeds on the "same" Kaggle CPU varied
 by ~20% between sessions, so this is the column to compare.
 ³ Compute time ÷ audio time; below 1 is faster than real time.
+⁴ Overstated: this run converted the model to int8 in the same process, so the peak includes the FP32 model used for conversion. The int8 model itself is 255 MB (FP32: 967 MB). Conversion now runs in a separate process.
 
 ### Findings
 

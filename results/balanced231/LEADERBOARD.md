@@ -34,6 +34,7 @@
 
 ## Warnings
 
+- **fw-v2-int8**: Peak RAM includes the one-time FP32-to-int8 conversion, which ran in the same process; the int8 runtime footprint is lower (model file 255 MB vs 967 MB). Conversion now runs in a separate process.
 - **vrclc-medium**: 3 clips reached the 444-token cap (2 repetition loops, 1 repeated sentence); these are model failures, not truncation of real speech
 
 ## Training-data overlap notes

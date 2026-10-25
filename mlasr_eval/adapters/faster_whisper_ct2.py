@@ -67,10 +67,23 @@ class FasterWhisper(Adapter):
             raise RuntimeError(f"tokenizer.json was not written to {self.ct2_dir}")
         self.convert_s = time.time() - t0
 
+    def convert_in_subprocess(self) -> None:
+        """Convert in a child process, so the FP32 model loaded for conversion doesn't count
+        towards this process's peak RAM (which should reflect the int8 runtime only)."""
+        import json
+        import subprocess
+        import sys
+        code = ("import json,sys; from mlasr_eval.adapters.faster_whisper_ct2 import FasterWhisper as F; "
+                "a=F(**json.loads(sys.argv[1])); a.convert(); print(a.convert_s)")
+        args = json.dumps({"model_id": self.model_id, "revision": self.revision, "quantization": self.quantization,
+                           "ct2_dir": str(self.ct2_dir)})
+        out = subprocess.run([sys.executable, "-c", code, args], check=True, capture_output=True, text=True)
+        self.convert_s = float(out.stdout.strip().splitlines()[-1])
+
     def load(self) -> None:
         from faster_whisper import WhisperModel
         if not (self.ct2_dir / "model.bin").exists() or not (self.ct2_dir / "tokenizer.json").exists():
-            self.convert()
+            self.convert_in_subprocess()
         self.model = WhisperModel(str(self.ct2_dir), device="cpu", compute_type=self.compute_type,
                                   cpu_threads=self.threads, num_workers=1)
         self.eot = self.model.hf_tokenizer.token_to_id("<|endoftext|>")
@@ -101,7 +114,7 @@ class FasterWhisper(Adapter):
                   "decoding": f"greedy (beam_size={self.beam_size}), no timestamps, no temperature fallback",
                   "max_new_tokens": self.max_new_tokens,
                   "ct2_max_length": getattr(self, "ct2_max_length", None), "language": self.language,
-                  "convert_s": self.convert_s, "ct2_dir": str(self.ct2_dir),
+                  "convert_s": self.convert_s, "converted_in": "subprocess", "ct2_dir": str(self.ct2_dir),
                   "ct2_size_MB": round(sum(f.stat().st_size for f in self.ct2_dir.glob("*")) / 1e6, 1)
                   if self.ct2_dir.exists() else None,
                   "versions": versions("ctranslate2", "faster-whisper", "transformers")})

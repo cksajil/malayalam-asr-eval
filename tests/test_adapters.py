@@ -198,3 +198,16 @@ def test_report_speed_vs_v2_and_unseen_sources(tmp_path, monkeypatch):
     assert "|             3 |" in row or " 3 " in row   # 1.5 / 0.5 = 3x faster than v2 in its own session
     assert "0.0 / 0.0 *" in md
 
+
+
+def test_faster_whisper_conversion_does_not_inflate_peak_ram(tiny_whisper_dir, tmp_path, monkeypatch):
+    """Conversion (which loads the FP32 model) must run in a child process, not this one."""
+    pytest.importorskip("faster_whisper")
+    from mlasr_eval.adapters.faster_whisper_ct2 import FasterWhisper
+
+    def in_process(self):
+        raise AssertionError("conversion ran in the measuring process")
+    monkeypatch.setattr(FasterWhisper, "convert", in_process)     # only affects this process
+    a = FasterWhisper(tiny_whisper_dir, threads=1, ct2_dir=str(tmp_path / "ct2"))
+    a.load()
+    assert a.convert_s is not None and (tmp_path / "ct2" / "tokenizer.json").exists()

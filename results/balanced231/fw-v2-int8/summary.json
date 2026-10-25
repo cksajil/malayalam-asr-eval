@@ -138,6 +138,8 @@
     "python": "3.13.15"
   },
   "date": "2026-10-24",
-  "warnings": [],
+  "warnings": [
+    "Peak RAM includes the one-time FP32-to-int8 conversion, which ran in the same process; the int8 runtime footprint is lower (model file 255 MB vs 967 MB). Conversion now runs in a separate process."
+  ],
   "session": "kaggle-2026-10-24-b"
 }
