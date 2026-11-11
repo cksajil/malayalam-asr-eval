@@ -110,6 +110,13 @@ RTF, latency, peak RAM, hardware and library versions).
   RTFx = 1/RTF. Peak RAM is the process's max RSS.
 - **Versions:** Transformers is pinned to 4.46.3, the version behind the published numbers.
 
+## Experiments
+
+- [`experiments/2026-11-decoding-and-combination`](experiments/2026-11-decoding-and-combination): beam search,
+  N-best LM rescoring, preprocessing, and picking between v2 and IndicConformer with a character LM
+  (31.2 → 26.4% WER, significant, no retraining), plus CPU cost of whisper-large-v3-turbo vs small. Scripts,
+  per-clip outputs and N-best lists.
+
 ## Add a model
 
 Add an entry to `MODELS` in [`mlasr_eval/models.py`](mlasr_eval/models.py). If it needs a new
