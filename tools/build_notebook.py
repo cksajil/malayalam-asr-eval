@@ -159,9 +159,13 @@ def env_python(name):
         py = f"{venv}/bin/python"
         if not os.path.exists(py):
             t0 = time.time()
-            subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", venv], check=True)
+            # Kaggle's Python has no ensurepip: make the venv without pip and install into it
+            # with the system pip (`pip --python` targets another interpreter's environment).
+            subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", "--without-pip", venv],
+                           check=True)
             pkgs = {"nemo": ["nemo_toolkit[asr]"]}[name]
-            r = subprocess.run([py, "-m", "pip", "install", "-q", *pkgs], capture_output=True, text=True)
+            r = subprocess.run([sys.executable, "-m", "pip", "--python", py, "install", "-q", *pkgs],
+                               capture_output=True, text=True)
             print(r.stdout[-3000:], r.stderr[-6000:])
             r.check_returncode()
             print(f"[env {name}] ready in {(time.time()-t0)/60:.1f} min")
