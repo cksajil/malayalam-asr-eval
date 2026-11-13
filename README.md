@@ -22,6 +22,7 @@ won't reach most of the people Malayalam ASR is for.
 | `whisper-v2` | sajilck/whisper-small-malayalam-v2 | Transformers FP32 (sanity check: 31.2% WER / 4.0% CER) |
 | `fw-v2-int8` | same weights | CTranslate2 int8 |
 | `indicconformer-ctc` | ai4bharat/indic-conformer-600m-multilingual | CTC (gated: needs `HF_TOKEN`) |
+| `koyal` | adalat-ai/koyal-ml-120m-1.0 | NeMo TDT (own env: `.[nemo]`) |
 | `mms-1b-all` | facebook/mms-1b-all (`mal` adapter) | wav2vec2 CTC |
 | `kavya-small` | kavyamanohar/whisper-small-malayalam | Transformers FP32 |
 | `vrclc-medium` | vrclc/Whisper-medium-Malayalam | Transformers FP32 (gated: request access) |
@@ -78,6 +79,7 @@ stops if it doesn't reproduce 31.2% / 4.0% (±1.0 / ±0.5 points).
 
 ```bash
 pip install -e ".[all]"                       # or .[whisper], .[faster-whisper], .[conformer], .[wav2vec2]
+# Koyal needs NeMo, whose transformers conflicts with the 4.46.3 pin: use a separate venv with .[nemo]
 python -m mlasr_eval prepare --subset balanced231
 python -m mlasr_eval run whisper-v2 --cores 2  # one model per process
 python -m mlasr_eval run fw-v2-int8 --cores 2
@@ -97,6 +99,10 @@ RTF, latency, peak RAM, hardware and library versions).
 - **Normalisation** (identical to the published notebooks): NFC; old-style chillu (consonant
   + virama + ZWJ) → atomic chillu; drop ZWJ/ZWNJ; punctuation and symbols → space; collapse
   whitespace. `WER_raw` is also reported (NFC + whitespace only).
+- **No-digit variant:** references are verbatim (numbers spelled out), while rich-transcription
+  models such as Koyal write digits. `WER/CER no-digit` drops every clip whose reference or the
+  model's hypothesis contains a digit or a Malayalam number word, and reports how many were dropped.
+  The main score stays the normalised WER/CER above.
 - **Scoring:** corpus WER = Σ(S+D+I) / Σ(reference words) with jiwer; CER on normalised text with
   spaces removed; 95% CI from a 1,000-sample utterance bootstrap with a fixed seed.
 - **Decoding:** greedy everywhere, batch 1, no language model. Whisper models use

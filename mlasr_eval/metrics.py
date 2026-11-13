@@ -3,6 +3,12 @@
 Corpus WER = sum(S + D + I) / sum(N) over utterances, after `norm_ml`.
 CER is computed on normalised text with spaces removed.
 95% CI: utterance-level bootstrap, B=1000, fixed seed (reproducible).
+
+No-digit variant (`WER_nodigit`, `CER_nodigit`): the same scores after dropping clips whose
+reference or hypothesis contains a digit or a Malayalam number word (normalize.has_number).
+It removes the "15" vs "പതിനഞ്ച്" mismatch that rich-transcription models (Koyal) pay for.
+The excluded set depends on each model's own hypotheses, so `nodigit_excluded` is reported
+alongside it.
 """
 from __future__ import annotations
 
@@ -10,7 +16,7 @@ import jiwer
 import numpy as np
 import pandas as pd
 
-from .normalize import norm_ml, norm_raw
+from .normalize import has_number, norm_ml, norm_raw
 
 SEED = 42
 
@@ -53,6 +59,7 @@ def score(df: pd.DataFrame) -> pd.DataFrame:
     df["wer_utt"] = (df.norm_S + df.norm_D + df.norm_I) / df.norm_N.clip(lower=1)
     df["is_empty"] = df.hyp.map(lambda s: not norm_ml(s))
     df["loop"] = df.hyp.map(lambda s: is_loop(norm_ml(s)))
+    df["has_number"] = [has_number(r) or has_number(h) for r, h in zip(df.ref, df.hyp)]
     df["len_ratio"] = (df.hyp.map(lambda s: len(norm_ml(s).split()))
                        / df.ref.map(lambda s: len(norm_ml(s).split())).clip(lower=1))
     return df
@@ -77,6 +84,17 @@ def boot_ci(df: pd.DataFrame, B: int = 1000, seed: int = SEED) -> tuple[float, f
     return float(lo), float(hi)
 
 
+def nodigit(df: pd.DataFrame) -> dict:
+    """WER/CER after dropping clips whose reference or hypothesis contains a number."""
+    mask = df["has_number"] if "has_number" in df else [has_number(r) or has_number(h)
+                                                          for r, h in zip(df.ref, df.hyp.fillna(""))]
+    mask = pd.Series(mask, index=df.index).astype(bool)
+    kept = df[~mask]
+    return {"WER_nodigit": corpus_wer(kept) if len(kept) else None,
+            "CER_nodigit": corpus_cer(kept) if len(kept) else None,
+            "nodigit_n_clips": int(len(kept)), "nodigit_excluded": int(mask.sum())}
+
+
 def summarise(df: pd.DataFrame) -> dict:
     """Accuracy + speed summary for one scored run (expects total_s and dur columns for speed)."""
     lo, hi = boot_ci(df)
@@ -86,6 +104,7 @@ def summarise(df: pd.DataFrame) -> dict:
         "audio_min": round(float(df.dur.sum()) / 60, 2),
         "WER": corpus_wer(df), "WER_CI95": [lo, hi], "WER_raw": corpus_wer(df, "raw"), "CER": corpus_cer(df),
         "sub": float(sdi.norm_S), "del": float(sdi.norm_D), "ins": float(sdi.norm_I),
+        **nodigit(df),
         "exact_match": float((df.wer_utt == 0).mean()),
         "empty": int(df.is_empty.sum()), "loops": int(df.loop.sum()),
     }

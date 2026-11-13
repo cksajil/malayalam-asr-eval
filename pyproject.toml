@@ -28,6 +28,8 @@ faster-whisper = ["faster-whisper>=1.1", "ctranslate2>=4.4", "transformers==4.46
 conformer = ["torch", "torchaudio", "transformers==4.46.3", "onnxruntime>=1.20"]
 wav2vec2 = ["torch", "transformers==4.46.3"]
 all = ["malayalam-asr-eval[whisper,faster-whisper,conformer,wav2vec2]"]
+# NeMo (Koyal) needs a newer transformers than the pin above: install it in its own environment.
+nemo = ["torch", "nemo_toolkit[asr]"]
 dev = ["pytest", "nbformat"]
 
 [tool.setuptools.packages.find]

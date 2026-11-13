@@ -1,5 +1,44 @@
-"""Generate notebooks/kaggle_cpu_benchmark.ipynb. Edit here, then: python tools/build_notebook.py"""
+"""Generate notebooks/kaggle_cpu_benchmark.ipynb. Edit here, then: python tools/build_notebook.py
+
+Options produce variants for `kaggle kernels push` without editing the cells, e.g. a smoke test:
+    python tools/build_notebook.py --plan whisper-v2,koyal --rerun whisper-v2,koyal --limit 10 \\
+        --out /path/to/kernel_dir/kaggle-cpu-benchmark.ipynb
+"""
+import argparse
+import json
+
 import nbformat as nbf
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--plan", default=None, help="comma-separated models to run (whisper-v2 is always first)")
+ap.add_argument("--rerun", default="whisper-v2,fw-v2-int8,koyal",
+                help="comma-separated models to re-run even if attached earlier results have them")
+ap.add_argument("--limit", type=int, default=None, help="first N clips only (smoke test; skips the sanity gate)")
+ap.add_argument("--session", default=None, help="MLASR_SESSION label recorded in every summary")
+ap.add_argument("--out", default="notebooks/kaggle_cpu_benchmark.ipynb")
+args = ap.parse_args()
+
+DEFAULT_PLAN = """["whisper-v2",          # sanity check, must be first
+              "fw-v2-int8",          # CTranslate2 int8 of v2
+              "indicconformer-ctc",  # CTC, non-autoregressive
+              "koyal",               # Adalat AI Koyal 120M (NeMo TDT), runs in its own venv
+              "mms-1b-all",          # wav2vec2 CTC (MMS, Malayalam adapter)
+              "kavya-small",         # competitor
+              "vrclc-medium"]        # competitor, slowest"""
+if args.plan:
+    _names = [n.strip() for n in args.plan.split(",") if n.strip() and n.strip() != "whisper-v2"]
+    PLAN_SRC = json.dumps(["whisper-v2"] + _names) + "   # whisper-v2 first: sanity check + speed reference"
+else:
+    PLAN_SRC = DEFAULT_PLAN
+SUBST = {"@PLAN@": PLAN_SRC,
+         "@RERUN@": json.dumps([n.strip() for n in args.rerun.split(",") if n.strip()]),
+         "@LIMIT@": repr(args.limit), "@SESSION@": repr(args.session)}
+
+
+def fill(src):
+    for k, v in SUBST.items():
+        src = src.replace(k, v)
+    return src
 
 nb = nbf.v4.new_notebook()
 cells = []
@@ -21,30 +60,32 @@ doesn't, the notebook stops, because nothing after it would be comparable.
 - Add-ons → Secrets → `HF_TOKEN` (needed for IndicConformer, which is gated: accept its conditions on
   huggingface.co/ai4bharat/indic-conformer-600m-multilingual first). Without it that one model is skipped.
 - Runtime: roughly 4–5 h for the default plan (vrclc medium is the slowest, so it runs last).
-  Finished models are skipped on re-run, and an interrupted model resumes from its last checkpoint.""")
+  Finished models are skipped on re-run, and an interrupted model resumes from its last checkpoint.
+- Models with `python_env="nemo"` in the registry (Koyal) run in a separate virtualenv with NeMo added,
+  because NeMo needs a newer transformers than the 4.46.3 pinned for the Whisper numbers. The venv
+  shares the system packages; each model still runs in its own process, so peak RAM is per model.""")
 
-code(r'''# ---------------- CONFIG ----------------
+code(fill(r'''# ---------------- CONFIG ----------------
 REPO_URL   = "https://github.com/cksajil/malayalam-asr-eval"
 BRANCH     = "main"         # use the PR branch name here until it is merged
 CORES      = 2              # physical cores to pin each run to
-PLAN       = ["whisper-v2",          # sanity check, must be first
-              "fw-v2-int8",          # CTranslate2 int8 of v2
-              "indicconformer-ctc",  # CTC, non-autoregressive
-              "mms-1b-all",          # wav2vec2 CTC (MMS, Malayalam adapter)
-              "kavya-small",         # competitor
-              "vrclc-medium"]        # competitor, slowest
+PLAN       = @PLAN@
+LIMIT      = @LIMIT@        # e.g. 10 for a smoke test (the v2 sanity gate is then skipped)
+SESSION    = @SESSION@      # recorded in every summary; "Speed vs v2" compares within one session
 OPTIONAL   = []             # e.g. ["indicconformer-rnnt", "xlsr-ml-shawn", "whisper-v1"]
 RUN_FULL   = False          # also score the full 2,684-clip clean set (~88% Shrutilipi; ~10x longer)
 SANITY_TOL = {"WER": 1.0, "CER": 0.5}   # percentage points vs published v2
 # Re-runs: attach an earlier results.zip as a Kaggle dataset and finished models are reused.
 # Models listed here are run again anyway (whisper-v2 first, so the sanity check and the
 # speed comparison come from this session's CPU).
-RERUN      = ["whisper-v2", "fw-v2-int8"]
-WORK       = "/kaggle/working"''')
+RERUN      = @RERUN@
+WORK       = "/kaggle/working"'''))
 
 code(r'''import os, sys, json, subprocess, shutil, time
 import glob
 os.chdir(WORK)
+if SESSION:
+    os.environ["MLASR_SESSION"] = SESSION   # inherited by every model subprocess
 REPO = f"{WORK}/malayalam-asr-eval"
 # Code source: an attached Kaggle dataset containing the repo (if any), otherwise GitHub.
 import zipfile
@@ -105,8 +146,32 @@ for p in ["torch", "transformers", "ctranslate2", "faster-whisper", "onnxruntime
 
 md("## 1. Evaluation data (download, filter to clean rows, sample, decode once)")
 
-code(r'''def cli(*args, log=None):
-    cmd = [sys.executable, "-u", "-m", "mlasr_eval", *args]
+code(r'''ENVS = {}   # python_env name -> interpreter
+
+def env_python(name):
+    """Interpreter for a registry entry's python_env (None = this kernel's Python).
+    'nemo': a virtualenv on top of the system packages with nemo_toolkit[asr] added, so NeMo's
+    newer transformers doesn't replace the 4.46.3 used for the Whisper rows."""
+    if not name:
+        return sys.executable
+    if name not in ENVS:
+        venv = f"{WORK}/venv-{name}"
+        py = f"{venv}/bin/python"
+        if not os.path.exists(py):
+            t0 = time.time()
+            subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", venv], check=True)
+            pkgs = {"nemo": ["nemo_toolkit[asr]"]}[name]
+            r = subprocess.run([py, "-m", "pip", "install", "-q", *pkgs], capture_output=True, text=True)
+            print(r.stdout[-3000:], r.stderr[-6000:])
+            r.check_returncode()
+            print(f"[env {name}] ready in {(time.time()-t0)/60:.1f} min")
+        print(subprocess.run([py, "-c", "import importlib.metadata as m; print({p: m.version(p) for p in "
+                              "['torch', 'transformers', 'nemo_toolkit']})"], capture_output=True, text=True))
+        ENVS[name] = py
+    return ENVS[name]
+
+def cli(*args, log=None, python=None):
+    cmd = [python or sys.executable, "-u", "-m", "mlasr_eval", *args]
     print("$", " ".join(cmd), flush=True)
     p = subprocess.Popen(cmd, cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     lines = []
@@ -149,32 +214,42 @@ md("## 2. Sanity check: v2 must reproduce 31.2% WER / 4.0% CER")
 code(r'''def summary_path(name, subset="balanced231"):
     return f"{RESULTS}/{subset}/{name}/summary.json"
 
+sys.path.insert(0, REPO)   # the editable install isn't visible to this kernel until a restart
+from mlasr_eval.models import MODELS
+
 def run(name, data=DATA):
     if os.path.exists(summary_path(name, os.path.splitext(os.path.basename(data))[0])):
         print(f"[{name}] already done, skipping"); return 0
     t0 = time.time()
     os.makedirs(RESULTS, exist_ok=True)
-    rc, out = cli("run", name, "--data", data, "--results", RESULTS, "--cores", str(CORES),
-                  log=f"{RESULTS}/{name}.log")
+    try:
+        py = env_python(MODELS[name].get("python_env"))
+    except subprocess.CalledProcessError as e:
+        print(f"[{name}] environment setup failed: {e}"); return 99
+    extra = ["--limit", str(LIMIT)] if LIMIT else []
+    rc, out = cli("run", name, "--data", data, "--results", RESULTS, "--cores", str(CORES), *extra,
+                  log=f"{RESULTS}/{name}.log", python=py)
     print(f"[{name}] exit {rc} after {(time.time()-t0)/60:.1f} min\n")
     return rc
 
 assert run("whisper-v2") == 0, "whisper-v2 run failed - see results/whisper-v2.log"
 s = json.load(open(summary_path("whisper-v2")))
-c = s["sanity"]
-print(f"v2 WER {100*s['overall']['WER']:.1f}% (expected 31.2, {c['delta_WER_pts']:+.1f} pts)  "
-      f"CER {100*s['overall']['CER']:.1f}% (expected 4.0, {c['delta_CER_pts']:+.1f} pts)  "
-      f"near-cap clips {s['overall']['near_cap']}  RTF {s['overall']['RTF']:.2f}")
-if abs(c["delta_WER_pts"]) > SANITY_TOL["WER"] or abs(c["delta_CER_pts"]) > SANITY_TOL["CER"]:
-    raise SystemExit("Sanity check FAILED - the setup does not match the published eval. "
-                     "Check the transformers version (4.46.3), max_new_tokens (444) and the clip manifest.")
-print("Sanity check passed - setup matches the published numbers.")''')
+if LIMIT:
+    print(f"Smoke test ({LIMIT} clips): sanity gate skipped. v2 WER {100*s['overall']['WER']:.1f}%  "
+          f"CER {100*s['overall']['CER']:.1f}%  RTF {s['overall']['RTF']:.2f}")
+else:
+    c = s["sanity"]
+    print(f"v2 WER {100*s['overall']['WER']:.1f}% (expected 31.2, {c['delta_WER_pts']:+.1f} pts)  "
+          f"CER {100*s['overall']['CER']:.1f}% (expected 4.0, {c['delta_CER_pts']:+.1f} pts)  "
+          f"near-cap clips {s['overall']['near_cap']}  RTF {s['overall']['RTF']:.2f}")
+    if abs(c["delta_WER_pts"]) > SANITY_TOL["WER"] or abs(c["delta_CER_pts"]) > SANITY_TOL["CER"]:
+        raise SystemExit("Sanity check FAILED - the setup does not match the published eval. "
+                         "Check the transformers version (4.46.3), max_new_tokens (444) and the clip manifest.")
+    print("Sanity check passed - setup matches the published numbers.")''')
 
 md("## 3. All other models")
 
-code(r'''sys.path.insert(0, REPO)   # the editable install isn't visible to this kernel until a restart
-from mlasr_eval.models import MODELS
-status = {}
+code(r'''status = {}
 for name in PLAN[1:] + OPTIONAL:
     if MODELS[name].get("gated") and not HAS_TOKEN:
         status[name] = "skipped (needs HF_TOKEN)"; print(f"[{name}] {status[name]}"); continue
@@ -209,5 +284,5 @@ nb["metadata"] = {"kernelspec": {"display_name": "Python 3", "language": "python
                   "language_info": {"name": "python"},
                   "kaggle": {"accelerator": "none", "isInternetEnabled": True, "language": "python",
                              "sourceType": "notebook", "isGpuEnabled": False}}
-nbf.write(nb, "notebooks/kaggle_cpu_benchmark.ipynb")
-print("wrote notebooks/kaggle_cpu_benchmark.ipynb")
+nbf.write(nb, args.out)
+print("wrote", args.out)
