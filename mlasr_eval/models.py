@@ -36,6 +36,17 @@ MODELS: dict[str, dict] = {
         role="competitor", params="244M", overlap_sources=["commonvoice"],
         overlap="Card lists Common Voice 13; commonvoice test sentences may overlap its training data."),
 
+    "koyal": dict(
+        adapter="nemo_asr", model_id="adalat-ai/koyal-ml-120m-1.0",
+        role="competitor (rich transcription)", params="120M", license="CC-BY-4.0",
+        python_env="nemo",   # needs nemo_toolkit[asr]; run in a separate env so transformers stays 4.46.3
+        overlap_sources=["shrutilipi", "commonvoice", "indictts", "imasc", "openslr63"],
+        overlap="Adalat AI, NeMo Conformer hybrid TDT-CTC, greedy TDT. Card lists ~1,350 h from IndicVoices, "
+                "Shrutilipi, SPRING-INX, Kathbath, Vaani, IMaSC, IndicTTS, FLEURS, ULCA, OpenSLR 63, Common Voice "
+                "and Festvox IIITH, so shrutilipi, commonvoice, indictts, imasc and openslr63 rows may have been "
+                "seen in training; only smc is unseen. Writes punctuation and digits (rich orthography): "
+                "punctuation is removed by the normaliser, digits are not (see the no-digit columns)."),
+
     # --- non-autoregressive (CTC) ---------------------------------------------------------------
     "indicconformer-ctc": dict(
         adapter="indic_conformer", model_id="ai4bharat/indic-conformer-600m-multilingual",
@@ -65,9 +76,11 @@ ADAPTERS = {
     "faster_whisper": ("mlasr_eval.adapters.faster_whisper_ct2", "FasterWhisper"),
     "indic_conformer": ("mlasr_eval.adapters.indic_conformer", "IndicConformer"),
     "wav2vec2_ctc": ("mlasr_eval.adapters.wav2vec2_ctc", "Wav2Vec2CTC"),
+    "nemo_asr": ("mlasr_eval.adapters.nemo_asr", "NemoASR"),
 }
 
-DEFAULT_PLAN = ["whisper-v2", "fw-v2-int8", "indicconformer-ctc", "mms-1b-all", "vrclc-medium", "kavya-small"]
+DEFAULT_PLAN = ["whisper-v2", "fw-v2-int8", "indicconformer-ctc", "koyal", "mms-1b-all", "vrclc-medium",
+                "kavya-small"]
 
 
 def build(name: str, threads: int, model_id: str | None = None, **overrides):

@@ -11,6 +11,7 @@ against `sajilck/malayalam-asr-corpus`'s own train split, so it can't rule this 
 | `whisper-v2` | sajilck/whisper-small-malayalam-v2 | Transformers FP32, greedy, 444 tokens | Reference; sanity check (31.2% / 4.0%) | None (filtered) |
 | `fw-v2-int8` | same weights, converted | CTranslate2 int8 (faster-whisper) | Does int8 + CTranslate2 make autoregressive Whisper usable on 2 cores? | None |
 | `indicconformer-ctc` | ai4bharat/indic-conformer-600m-multilingual | HF remote code (ONNX Runtime), CTC | Non-autoregressive: cost scales with audio length, not token count | Training data not stated; AI4Bharat also built Shrutilipi |
+| `koyal` | adalat-ai/koyal-ml-120m-1.0 (CC-BY-4.0) | NeMo Conformer hybrid TDT-CTC, FP32, greedy TDT; runs in its own env (`pip install ".[nemo]"`) | Small (120M) Malayalam-only model from Adalat AI; TDT transducer (decoder steps skip frames, so cost tracks audio length more than token count); rich transcription (punctuation + digits) | Card lists ~1,350 h from IndicVoices, Shrutilipi, SPRING-INX, Kathbath, Vaani, IMaSC, IndicTTS, FLEURS, ULCA, OpenSLR 63, Common Voice and Festvox IIITH: every test source except `smc` is marked seen, so its "unseen" WER is on SMC's 20 clips only |
 | `mms-1b-all` | facebook/mms-1b-all, `target_lang="mal"` | wav2vec2 CTC, FP32 | The strongest maintained wav2vec2 option with a Malayalam head | Fine-tuned on data that includes Common Voice and FLEURS |
 | `kavya-small` | kavyamanohar/whisper-small-malayalam | Transformers FP32 | Competitor, same size as v2 | Card lists Common Voice 13 |
 | `vrclc-medium` | vrclc/Whisper-medium-Malayalam (gated) | Transformers FP32 | Competitor, 3× larger | Card lists IMaSC, OpenSLR 63, SMC's Malayalam Speech Corpus and Festvox-IIITH. Measured: 0.0% WER on smc, 8.4% on openslr63, 16.1% on imasc vs 62–70% on unseen sources |
@@ -40,6 +41,12 @@ which is a separate project. Revisit if NVIDIA adds Malayalam or a community Mal
 fine-tune appears.
 
 ## Notes on fairness
+
+- Rich-transcription models (Koyal) write punctuation and digits; the verbatim references spell
+  numbers out. The normaliser removes punctuation, but "15" vs "പതിനഞ്ച്" still counts as an error.
+  The leaderboard therefore also reports **no-digit** WER/CER: the same scores after dropping every
+  clip whose reference or that model's hypothesis contains a digit or a Malayalam number word
+  (`mlasr_eval.normalize.has_number`), for every model, with the number of clips dropped.
 
 - The leaderboard marks per-source cells from a model's own training corpora with `*`, and
   reports "WER % unseen sources", which drops those clips. Use that column to rank third-party

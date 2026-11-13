@@ -64,6 +64,18 @@ def unseen_wer(s: dict, results_dir: str, subset: str):
     return corpus_wer(d), len(d)
 
 
+def nodigit_scores(s: dict, results_dir: str, subset: str) -> dict:
+    """No-digit WER/CER, recomputed from per_utterance.csv so results from before the
+    variant existed get it too (falls back to summary.json)."""
+    utt = os.path.join(results_dir, subset, s["model"], "per_utterance.csv")
+    if os.path.exists(utt):
+        from .metrics import nodigit
+        d = pd.read_csv(utt, keep_default_na=False)
+        d["hyp"] = d.hyp.astype(str)
+        return nodigit(d.drop(columns=["has_number"], errors="ignore"))
+    return {k: s["overall"].get(k) for k in ("WER_nodigit", "CER_nodigit", "nodigit_n_clips", "nodigit_excluded")}
+
+
 def tables(summaries: list[dict], results_dir: str = "results",
            subset: str = "balanced231") -> tuple[pd.DataFrame, pd.DataFrame]:
     rows, src_rows = [], []
@@ -76,6 +88,9 @@ def tables(summaries: list[dict], results_dir: str = "results",
             "WER %": round(100 * o["WER"], 1),
             "95% CI": f"{pct(o['WER_CI95'][0])}–{pct(o['WER_CI95'][1])}",
             "CER %": round(100 * o["CER"], 1),
+            **(lambda nd: {"WER % no-digit": round(100 * nd["WER_nodigit"], 1) if nd["WER_nodigit"] is not None else None,
+                           "CER % no-digit": round(100 * nd["CER_nodigit"], 1) if nd["CER_nodigit"] is not None else None,
+                           "No-digit excluded": nd["nodigit_excluded"]})(nodigit_scores(s, results_dir, subset)),
             "WER % unseen sources": (lambda w: f"{100 * w[0]:.1f} ({w[1]} clips)" if w[0] is not None else "–")(
                 unseen_wer(s, results_dir, subset)),
             "Speed vs v2": speed_vs_v2(s, ref),
@@ -117,6 +132,11 @@ def write_report(results_dir: str = "results", subset: str = "balanced231") -> s
         f"({hw.get('threads', '?')} threads), batch 1, greedy decoding. RTF below 1 is faster than real time. "
         f"Speed vs v2 = whisper-v2's RTF on the same machine ÷ this model's RTF (2.0 = twice as fast); "
         f"use it rather than RTF to compare rows from different Kaggle sessions.",
+        "",
+        "**WER % / CER % no-digit** drop every clip whose reference or that model's hypothesis contains a "
+        "digit or a Malayalam number word (`No-digit excluded` = how many). References spell numbers out, "
+        "so a model that writes digits (Koyal) loses points on formatting, not recognition. Because the "
+        "excluded set depends on each model's own output, compare rows with the excluded count in mind.",
         "",
         "**WER % unseen sources** drops the clips from corpora in that model's own training data "
         "(marked * below). It is the fair column for comparing third-party models.",
