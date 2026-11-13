@@ -1,0 +1,143 @@
+{
+  "model": "koyal",
+  "registry_entry": "koyal",
+  "model_id": "adalat-ai/koyal-ml-120m-1.0",
+  "role": "competitor (rich transcription)",
+  "params": "120M",
+  "subset": "balanced231",
+  "overlap_note": "Adalat AI, NeMo Conformer hybrid TDT-CTC, greedy TDT. Card lists ~1,350 h from IndicVoices, Shrutilipi, SPRING-INX, Kathbath, Vaani, IMaSC, IndicTTS, FLEURS, ULCA, OpenSLR 63, Common Voice and Festvox IIITH, so shrutilipi, commonvoice, indictts, imasc and openslr63 rows may have been seen in training; only smc is unseen. Writes punctuation and digits (rich orthography): punctuation is removed by the normaliser, digits are not (see the no-digit columns).",
+  "overrides": null,
+  "overall": {
+    "n_clips": 231,
+    "audio_min": 18.64,
+    "WER": 0.303401,
+    "WER_CI95": [
+      0.27094,
+      0.337219
+    ],
+    "WER_raw": 0.418937,
+    "CER": 0.060232,
+    "sub": 0.217687,
+    "del": 0.032653,
+    "ins": 0.053061,
+    "WER_nodigit": 0.28332,
+    "CER_nodigit": 0.040331,
+    "nodigit_n_clips": 197,
+    "nodigit_excluded": 34,
+    "exact_match": 0.264069,
+    "empty": 0,
+    "loops": 0,
+    "RTF": 0.168627,
+    "RTFx": 5.930257,
+    "latency_p50_s": 0.722682,
+    "latency_p90_s": 1.331179,
+    "latency_max_s": 2.137396,
+    "near_cap": 0
+  },
+  "per_source": {
+    "commonvoice": {
+      "n": 50,
+      "WER": 0.371795,
+      "CER": 0.085453,
+      "WER_CI95": [
+        0.274983,
+        0.490387
+      ],
+      "RTF": 0.166617
+    },
+    "imasc": {
+      "n": 44,
+      "WER": 0.341137,
+      "CER": 0.06893,
+      "WER_CI95": [
+        0.274751,
+        0.411155
+      ],
+      "RTF": 0.163093
+    },
+    "indictts": {
+      "n": 50,
+      "WER": 0.244373,
+      "CER": 0.04885,
+      "WER_CI95": [
+        0.18968,
+        0.301113
+      ],
+      "RTF": 0.169659
+    },
+    "openslr63": {
+      "n": 32,
+      "WER": 0.26506,
+      "CER": 0.04629,
+      "WER_CI95": [
+        0.180723,
+        0.366485
+      ],
+      "RTF": 0.163793
+    },
+    "shrutilipi": {
+      "n": 50,
+      "WER": 0.3,
+      "CER": 0.055526,
+      "WER_CI95": [
+        0.246075,
+        0.35065
+      ],
+      "RTF": 0.181251
+    },
+    "smc": {
+      "n": 5,
+      "WER": 0.25,
+      "CER": 0.023256,
+      "RTF": 0.157063
+    }
+  },
+  "speed": {
+    "load_s": 32.648891,
+    "cold_first_clip_s": 1.020356,
+    "warmup_calls": 3,
+    "peak_rss_MB": 2089.542969,
+    "max_tokens_seen": null,
+    "clips_at_max_tokens": null
+  },
+  "adapter": {
+    "family": "nemo",
+    "model_id": "adalat-ai/koyal-ml-120m-1.0",
+    "revision": null,
+    "threads": 2,
+    "token_cap": null,
+    "engine": "NeMo FP32",
+    "decoding": "greedy (greedy_batch), no LM",
+    "decoder_type": "checkpoint default",
+    "matches_model_transcribe": true,
+    "mismatch_example": null,
+    "versions": {
+      "torch": "2.11.0+cpu",
+      "nemo_toolkit": "3.0.0",
+      "transformers": "4.46.3"
+    }
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Xeon(R) CPU @ 2.20GHz",
+    "logical_cpus_machine": 4,
+    "requested_cores": 2,
+    "threads": 2,
+    "physical_cores_machine": 2,
+    "pinned_logical_cpus": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "pinned_physical_cores": 2,
+    "isa": [
+      "avx",
+      "avx2",
+      "fma"
+    ],
+    "python": "3.13.15"
+  },
+  "date": "2026-11-13",
+  "session": "kaggle-2026-11-13-koyal-full",
+  "warnings": []
+}

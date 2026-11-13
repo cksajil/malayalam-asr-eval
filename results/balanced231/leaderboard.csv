@@ -1,9 +1,11 @@
-Model,Checkpoint,Params,Engine,WER %,95% CI,CER %,WER % unseen sources,Speed vs v2,RTF,RTFx,p90 latency s,Peak RAM GB,Near cap,Max tokens,Empty,Loops
-indicconformer-ctc,ai4bharat/indic-conformer-600m-multilingual,600M,HF remote code (ONNX Runtime),30.1,27.2–33.3,4.0,31.3 (181 clips),13.77,0.14,7.13,1.07,3.88,0,–,0,0
-whisper-v2,sajilck/whisper-small-malayalam-v2,244M,transformers FP32,31.2,27.9–34.6,4.0,31.2 (231 clips),1.0,2.28,0.44,17.24,2.41,0,439 (1×),0,0
-whisper-v2-4threads,sajilck/whisper-small-malayalam-v2,244M,transformers FP32,31.2,27.9–34.6,4.0,31.2 (231 clips),,2.03,0.49,14.65,4.51,0,439 (1×),0,0
-fw-v2-int8,sajilck/whisper-small-malayalam-v2,244M,CTranslate2 int8,32.7,29.6–36.1,4.2,32.7 (231 clips),1.87,1.22,0.82,7.93,2.55,0,439 (1×),0,0
-vrclc-medium,vrclc/Whisper-medium-Malayalam,769M,transformers FP32,39.7,33.1–47.3,10.1,52.9 (150 clips),0.35,6.58,0.15,47.52,5.16,3,444 (3×),0,2
-vrclc-medium-4threads,vrclc/Whisper-medium-Malayalam,769M,transformers FP32,39.7,33.1–47.3,10.1,52.9 (150 clips),,5.69,0.18,39.72,6.77,3,444 (3×),0,2
-mms-1b-all,facebook/mms-1b-all,965M,transformers FP32,52.5,49.0–56.1,9.2,51.5 (181 clips),2.24,0.86,1.16,6.6,8.77,0,–,1,0
-kavya-small,kavyamanohar/whisper-small-malayalam,244M,transformers FP32,87.0,82.4–93.7,29.2,88.8 (181 clips),0.84,2.3,0.44,17.0,2.46,1,444 (1×),0,1
+Model,Checkpoint,Params,Engine,WER %,95% CI,CER %,WER % no-digit,CER % no-digit,No-digit excluded,WER % unseen sources,Speed vs v2,RTF,RTFx,p90 latency s,Peak RAM GB,Near cap,Max tokens,Empty,Loops
+indicconformer-ctc,ai4bharat/indic-conformer-600m-multilingual,600M,HF remote code (ONNX Runtime),30.1,27.2–33.3,4.0,29.7,3.9,33,31.3 (181 clips),13.77,0.14,7.13,1.07,3.88,0,–,0,0
+koyal,adalat-ai/koyal-ml-120m-1.0,120M,NeMo FP32,30.3,27.1–33.7,6.0,28.3,4.0,34,25.0 (5 clips),12.58,0.17,5.93,1.33,2.09,0,–,0,0
+whisper-v2-2026-11-13,sajilck/whisper-small-malayalam-v2,244M,transformers FP32,31.2,27.9–34.6,4.0,31.1,4.0,32,31.2 (231 clips),1.00,2.12,0.47,15.88,2.45,0,439 (1×),0,0
+whisper-v2-4threads,sajilck/whisper-small-malayalam-v2,244M,transformers FP32,31.2,27.9–34.6,4.0,31.1,4.0,32,31.2 (231 clips),,2.03,0.49,14.65,4.51,0,439 (1×),0,0
+whisper-v2,sajilck/whisper-small-malayalam-v2,244M,transformers FP32,31.2,27.9–34.6,4.0,31.1,4.0,32,31.2 (231 clips),1.00,2.28,0.44,17.24,2.41,0,439 (1×),0,0
+fw-v2-int8,sajilck/whisper-small-malayalam-v2,244M,CTranslate2 int8,32.7,29.6–36.1,4.2,32.7,4.1,32,32.7 (231 clips),1.87,1.22,0.82,7.93,2.55,0,439 (1×),0,0
+vrclc-medium,vrclc/Whisper-medium-Malayalam,769M,transformers FP32,39.7,33.1–47.3,10.1,40.9,10.8,31,52.9 (150 clips),0.35,6.58,0.15,47.52,5.16,3,444 (3×),0,2
+vrclc-medium-4threads,vrclc/Whisper-medium-Malayalam,769M,transformers FP32,39.7,33.1–47.3,10.1,40.9,10.8,31,52.9 (150 clips),,5.69,0.18,39.72,6.77,3,444 (3×),0,2
+mms-1b-all,facebook/mms-1b-all,965M,transformers FP32,52.5,49.0–56.1,9.2,51.7,8.2,34,51.5 (181 clips),2.24,0.86,1.16,6.6,8.77,0,–,1,0
+kavya-small,kavyamanohar/whisper-small-malayalam,244M,transformers FP32,87.0,82.4–93.7,29.2,88.1,29.3,32,88.8 (181 clips),0.84,2.3,0.44,17.0,2.46,1,444 (1×),0,1
