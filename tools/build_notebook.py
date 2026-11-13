@@ -155,7 +155,7 @@ def env_python(name):
     if not name:
         return sys.executable
     if name not in ENVS:
-        venv = f"{WORK}/venv-{name}"
+        venv = f"/tmp/venv-{name}"   # outside /kaggle/working, so it is not saved as notebook output
         py = f"{venv}/bin/python"
         if not os.path.exists(py):
             t0 = time.time()
