@@ -31,20 +31,21 @@ Optional: `whisper-v1`, `indicconformer-rnnt`, `xlsr-ml-shawn`. Parakeet and Nem
 checked and don't support Malayalam. Details, and which models may have trained on the same
 public corpora as the test rows, are in [docs/MODELS.md](docs/MODELS.md).
 
-## Results (October 2026)
+## Results (October–November 2026)
 
 231 leakage-free clips (18.6 min of audio), Kaggle CPU (Intel Xeon 2.20 GHz) pinned to 2 physical
 cores, batch 1, greedy decoding. Full tables, per-source numbers and per-clip outputs:
 [results/balanced231/LEADERBOARD.md](results/balanced231/LEADERBOARD.md).
 
-| Model | WER % (95% CI) | CER % | WER % on unseen sources¹ | Speed vs v2² | RTF³ | Peak RAM |
-|---|---|---|---|---|---|---|
-| IndicConformer 600M, CTC | **30.1** (27.2–33.3) | **4.0** | 31.3 | **13.8×** | **0.14** | 3.9 GB |
-| whisper-small-malayalam-v2 | 31.2 (27.9–34.6) | **4.0** | 31.2 | 1.0× | 2.28 | 2.4 GB |
-| v2, CTranslate2 int8 | 32.7 (29.6–36.1) | 4.2 | 32.7 | 1.9× | 1.22 | 2.6 GB⁴ |
-| vrclc/Whisper-medium-Malayalam | 39.7 (33.1–47.3) | 10.1 | 52.9 | 0.35× | 6.58 | 5.2 GB |
-| MMS-1b-all (wav2vec2 CTC) | 52.5 (49.0–56.1) | 9.2 | 51.5 | 2.2× | 0.86 | 8.8 GB |
-| kavyamanohar/whisper-small-malayalam | 87.0 (82.4–93.7) | 29.2 | 88.8 | 0.84× | 2.30 | 2.5 GB |
+| Model | WER % (95% CI) | CER % | WER / CER % no-digit⁵ | WER % on unseen sources¹ | Speed vs v2² | RTF³ | Peak RAM |
+|---|---|---|---|---|---|---|---|
+| IndicConformer 600M, CTC | **30.1** (27.2–33.3) | **4.0** | 29.7 / 3.9 | 31.3 | **13.8×** | **0.14** | 3.9 GB |
+| Koyal 120M (Adalat AI), NeMo TDT | 30.3 (27.1–33.7) | 6.0 | **28.3** / 4.0 | –⁶ | 12.6× | 0.17 | **2.1 GB** |
+| whisper-small-malayalam-v2 | 31.2 (27.9–34.6) | **4.0** | 31.1 / 4.0 | 31.2 | 1.0× | 2.28 | 2.4 GB |
+| v2, CTranslate2 int8 | 32.7 (29.6–36.1) | 4.2 | 32.7 / 4.1 | 32.7 | 1.9× | 1.22 | 2.6 GB⁴ |
+| vrclc/Whisper-medium-Malayalam | 39.7 (33.1–47.3) | 10.1 | 40.9 / 10.8 | 52.9 | 0.35× | 6.58 | 5.2 GB |
+| MMS-1b-all (wav2vec2 CTC) | 52.5 (49.0–56.1) | 9.2 | 51.7 / 8.2 | 51.5 | 2.2× | 0.86 | 8.8 GB |
+| kavyamanohar/whisper-small-malayalam | 87.0 (82.4–93.7) | 29.2 | 88.1 / 29.3 | 88.8 | 0.84× | 2.30 | 2.5 GB |
 
 ¹ WER after dropping clips from corpora in that model's own published training data: the fair
 column for third-party models (see [docs/MODELS.md](docs/MODELS.md)).
@@ -52,9 +53,20 @@ column for third-party models (see [docs/MODELS.md](docs/MODELS.md)).
 by ~20% between sessions, so this is the column to compare.
 ³ Compute time ÷ audio time; below 1 is faster than real time.
 ⁴ Overstated: this run converted the model to int8 in the same process, so the peak includes the FP32 model used for conversion. The int8 model itself is 255 MB (FP32: 967 MB). Conversion now runs in a separate process.
+⁵ Drops every clip whose reference or that model's output contains a digit or a Malayalam number word
+(32–34 of 231 clips per model). References spell numbers out; Koyal writes digits ("രണ്ടു" → "2"), which
+is formatting, not misrecognition. Koyal's CER on the 34 clips it loses is 17.9% vs 4.0% elsewhere.
+⁶ Koyal's card lists Shrutilipi, Common Voice, IndicTTS, IMaSC and OpenSLR 63 in its training data, so only
+the 5 SMC clips are unseen (25.0% WER on 5 clips: too few to mean anything). Its per-source numbers may
+benefit from having seen these corpora.
 
 ### Findings
 
+- **Koyal (120M) is tied with v2 and IndicConformer on accuracy, at half v2's size and a fifth of IndicConformer's.** 30.3% WER vs
+  31.2% (v2) and 30.1% (IndicConformer); paired bootstrap differences are −0.8 (−3.7 to +2.1) and +0.2
+  (−2.7 to +3.0) points, not significant. Without number clips it is the best row (28.3%), because it writes
+  digits where the references spell numbers out. It runs 12.6× faster than v2 (RTF 0.17) in 2.1 GB, close
+  to IndicConformer's speed. Caveat: it was trained on five of our six test sources (see ⁶).
 - **A CTC model matches v2's accuracy at ~14× the speed.** IndicConformer is statistically tied with
   v2 (confidence intervals overlap almost completely) and runs 7× faster than real time on 2 cores.
   It is the only model here that is both accurate and real-time on this hardware.

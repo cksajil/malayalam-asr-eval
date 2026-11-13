@@ -93,7 +93,7 @@ def tables(summaries: list[dict], results_dir: str = "results",
                            "No-digit excluded": nd["nodigit_excluded"]})(nodigit_scores(s, results_dir, subset)),
             "WER % unseen sources": (lambda w: f"{100 * w[0]:.1f} ({w[1]} clips)" if w[0] is not None else "–")(
                 unseen_wer(s, results_dir, subset)),
-            "Speed vs v2": speed_vs_v2(s, ref),
+            "Speed vs v2": (lambda v: "" if v is None else f"{v:.2f}")(speed_vs_v2(s, ref)),
             "RTF": round(o["RTF"], 2), "RTFx": round(o["RTFx"], 2) if o.get("RTFx") else None,
             "p90 latency s": round(o["latency_p90_s"], 2),
             "Peak RAM GB": round(sp["peak_rss_MB"] / 1000, 2),
@@ -123,15 +123,20 @@ def write_report(results_dir: str = "results", subset: str = "balanced231") -> s
     per_src.to_csv(os.path.join(out_dir, "per_source.csv"), index=False)
 
     hw = summaries[0].get("hardware", {})
+    threads = {x.get("hardware", {}).get("threads") for x in summaries}
+    cores_note = (f"pinned to {hw.get('pinned_physical_cores', '?')} physical cores ({hw.get('threads', '?')} threads), "
+                  if len(threads) == 1 else
+                  "thread count is recorded in each run's summary and is not the same for every row, ")
     first = summaries[0]["overall"]
     lines = [
         f"# Malayalam ASR leaderboard — `{subset}`",
         "",
         f"{first['n_clips']} leakage-free clips ({first['audio_min']} min). "
-        f"CPU: {hw.get('cpu_model', '?')}, pinned to {hw.get('pinned_physical_cores', '?')} physical cores "
-        f"({hw.get('threads', '?')} threads), batch 1, greedy decoding. RTF below 1 is faster than real time. "
-        f"Speed vs v2 = whisper-v2's RTF on the same machine ÷ this model's RTF (2.0 = twice as fast); "
-        f"use it rather than RTF to compare rows from different Kaggle sessions.",
+        f"CPU: {hw.get('cpu_model', '?')}, " + cores_note + "batch 1, greedy decoding. "
+        "RTF below 1 is faster than real time. "
+        "Speed vs v2 = whisper-v2's RTF on the same machine ÷ this model's RTF (2.0 = twice as fast); "
+        "use it rather than RTF to compare rows from different Kaggle sessions. "
+        "Rows with no recorded session have no Speed vs v2 value.",
         "",
         "**WER % / CER % no-digit** drop every clip whose reference or that model's hypothesis contains a "
         "digit or a Malayalam number word (`No-digit excluded` = how many). References spell numbers out, "
