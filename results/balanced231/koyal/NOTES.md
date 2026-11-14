@@ -13,6 +13,7 @@ tensor decoding gave the same text as `model.transcribe()`.
 | WER % (95% CI) | 30.3 (27.1–33.7) | 31.2 (27.9–34.6) | 30.1 (27.2–33.3) |
 | CER % | 6.0 | 4.0 | 4.0 |
 | WER / CER % no-digit | 28.3 / 4.0 (34 clips dropped) | 31.1 / 4.0 (32 dropped) | 29.7 / 3.9 (33 dropped) |
+| WER / CER % unified spelling (secondary, see caveats) | 28.4 / 5.3 | 29.6 / 3.4 | 27.5 / 3.1 |
 | Exact-match clips | 26% | 28% | 27% |
 | Speed vs v2 (same session) | 12.6× | 1.0× | 13.8× (Oct session) |
 | RTF (2 cores) | 0.17 | 2.12 | 0.14 (Oct session) |
@@ -98,10 +99,16 @@ errors (ഷട്ടൗണ്, തുടങ്ങും).
 - **Plain WER penalises Koyal's style.** Koyal's rich, written-style output (digits, word splits,
   standard spellings such as സൗ and ഗ്ഗ) is charged as errors against these verbatim references. The
   normalised WER understates its usefulness for dictation-style output and overstates it for verbatim use.
-- **One chillu spelling is not normalised.** `norm_ml` maps consonant + virama + ZWJ to atomic chillus, but
-  not consonant + virama alone (ള്, ന്, ർ…), which v2 sometimes writes on Common Voice clips. That costs v2
-  some errors that are only spelling. Changing it would change every published number, so it is noted
-  here, not fixed.
+- **One chillu spelling is not normalised, and it costs every model.** `norm_ml` maps consonant + virama +
+  ZWJ to atomic chillus, but not consonant + virama alone (ള്, ല്, ര്…). Many references are written that
+  way, mostly on Common Voice (e.g. മീറ്ററിനുള്ളില് in #20), so a model that writes the atomic chillu is
+  charged for a spelling difference. The "unified spelling" row re-scores the same outputs with every
+  chillu (ൺ ൻ ർ ൽ ൾ ൿ) written as consonant + virama and ൌ written as ൗ, on both sides, after `norm_ml`.
+  WER falls by 1.9 pts for Koyal, 1.6 for v2 and 2.7 for IndicConformer, so v2 gains least, and the three
+  stay within each other's confidence intervals. On Common Voice alone Koyal goes from 37.2% to 30.8% and
+  v2 from 38.0% to 32.1%. The row is a lower bound, not a replacement for the headline: the mapping also
+  merges real distinctions such as അവന് / അവൻ. The headline normalisation is unchanged, because changing
+  it would change every published number.
 - **Some references contain typos** (e.g. #20, #202), which charge every model equally.
 - **IndicConformer's speed comes from the October session.** It is compared through "speed vs v2" in its
   own session, not measured alongside Koyal.
